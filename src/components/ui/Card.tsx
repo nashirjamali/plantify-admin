@@ -5,13 +5,15 @@ interface CardProps {
   className?: string;
   padding?: 'sm' | 'md' | 'lg';
   shadow?: 'none' | 'soft' | 'medium' | 'large';
+  onClick?: () => void;
 }
 
 export default function Card({ 
   children, 
   className = '', 
   padding = 'md',
-  shadow = 'soft'
+  shadow = 'soft',
+  onClick
 }: CardProps) {
   const paddingClasses = {
     sm: 'p-4',
@@ -27,7 +29,10 @@ export default function Card({
   };
   
   return (
-    <div className={`bg-white border border-gray-200 rounded-lg ${paddingClasses[padding]} ${shadowClasses[shadow]} ${className}`}>
+    <div 
+      className={`bg-white border border-gray-200 rounded-lg ${paddingClasses[padding]} ${shadowClasses[shadow]} ${className}`}
+      onClick={onClick}
+    >
       {children}
     </div>
   );

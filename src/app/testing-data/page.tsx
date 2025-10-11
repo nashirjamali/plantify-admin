@@ -4,7 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { backendService } from "../../lib/backend";
-import { AIService } from "../../lib/aiService";
+import { AIService, generateNFTImage as generateNFTImageNew } from "../../lib/aiService";
 import Layout from "../../components/Layout";
 import {
   ProgressSteps,
@@ -210,12 +210,15 @@ export default function TestingDataPage() {
     }
 
     try {
-      const nftImage = await AIService.generateNFTImage(
-        startupFormData.description,
-        startupFormData.industry,
-        startupFormData.companyName // Use company name as temp ID
-      );
-      setAiGeneratedNFTImage(nftImage);
+      const formData = {
+        ...startupFormData,
+        sector: startupFormData.industry,
+        companyType: "Startup",
+        teamMembers: teamMembers
+      };
+      
+      const nftResult = await generateNFTImageNew(formData);
+      setAiGeneratedNFTImage(nftResult.imageUrl);
     } catch (error) {
       console.error("Failed to generate NFT image:", error);
       alert("Failed to generate NFT image. Please try again.");
@@ -330,6 +333,21 @@ export default function TestingDataPage() {
         revenue: "",
         website: "",
         pitchDeck: "",
+        foundedYear: "",
+        competitiveAdvantage: "",
+        useOfFunds: "",
+        revenueModel: "",
+        solution: "",
+        marketingStrategy: "",
+        legalDocuments: "",
+        monthlyRevenue: "",
+        operationalProcess: "",
+        advisors: "",
+        nftPrice: "",
+        location: "",
+        monthlyExpenses: "",
+        problemStatement: "",
+        founderBackground: "",
       });
       setTeamMembers([]);
       setAiGeneratedLogo("");

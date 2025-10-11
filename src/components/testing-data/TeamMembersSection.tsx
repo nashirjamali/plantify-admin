@@ -5,6 +5,7 @@ interface TeamMember {
   linkedin: string;
   email: string;
   isFounder: boolean;
+  photo: string;
 }
 
 interface TeamMembersSectionProps {
