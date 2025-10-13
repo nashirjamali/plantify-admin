@@ -18,18 +18,15 @@ interface TeamMember {
 
 interface StartupFormData {
   founderId: string;
-  companyName: string;
+  startupName: string;
   description: string;
-  industry: string;
-  businessModel: string;
+  sector: string;
+  companyType: string;
+  status: string;
   targetMarket: string;
   fundingGoal: string;
-  equityOffering: string;
-  timeline: string;
-  teamSize: string;
-  revenue: string;
+  periodicProfitSharing: string;
   website: string;
-  pitchDeck: string;
   // Additional backend fields
   foundedYear: string;
   competitiveAdvantage: string;
@@ -46,6 +43,13 @@ interface StartupFormData {
   monthlyExpenses: string;
   problemStatement: string;
   founderBackground: string;
+  // Optional fields
+  businessPlan?: string;
+  financialProjections?: string;
+  companyImages: string[];
+  companyLogo?: string;
+  nftImage?: string;
+  builtByCaffeineAI?: boolean;
 }
 
 interface StartupFormProps {
@@ -54,6 +58,7 @@ interface StartupFormProps {
   teamMembers: TeamMember[];
   aiGeneratedLogo: string;
   aiGeneratedNFTImage: string;
+  aiGeneratedCompanyImages: string[];
   isGeneratingStartupAI: boolean;
   isCreatingStartup: boolean;
   onInputChange: (field: string, value: string) => void;
@@ -73,6 +78,7 @@ export default function StartupForm({
   teamMembers,
   aiGeneratedLogo,
   aiGeneratedNFTImage,
+  aiGeneratedCompanyImages,
   isGeneratingStartupAI,
   isCreatingStartup,
   onInputChange,
@@ -122,9 +128,9 @@ export default function StartupForm({
           </button>
           <button
             onClick={onGenerateNFTImage}
-            disabled={!formData.description || !formData.industry}
+            disabled={!formData.description || !formData.sector}
             className="bg-gray-100 hover:bg-gray-200 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-2"
-            title={!formData.description || !formData.industry ? "Please fill in description and industry first" : "Generate NFT image based on startup description and industry"}
+            title={!formData.description || !formData.sector ? "Please fill in description and sector first" : "Generate NFT image based on startup description and sector"}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -195,34 +201,54 @@ export default function StartupForm({
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-black mb-1 form-label">Company Name</label>
+            <label className="block text-sm font-medium text-black mb-1 form-label">Startup Name</label>
             <input
               type="text"
-              value={formData.companyName}
-              onChange={(e) => onInputChange('companyName', e.target.value)}
+              value={formData.startupName}
+              onChange={(e) => onInputChange('startupName', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black form-input"
-              placeholder="Enter company name"
+              placeholder="Enter startup name"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-black mb-1 form-label">Industry</label>
+            <label className="block text-sm font-medium text-black mb-1 form-label">Sector</label>
             <input
               type="text"
-              value={formData.industry}
-              onChange={(e) => onInputChange('industry', e.target.value)}
+              value={formData.sector}
+              onChange={(e) => onInputChange('sector', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black form-input"
-              placeholder="Enter industry"
+              placeholder="Enter sector"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-black mb-1 form-label">Business Model</label>
-            <input
-              type="text"
-              value={formData.businessModel}
-              onChange={(e) => onInputChange('businessModel', e.target.value)}
+            <label className="block text-sm font-medium text-black mb-1 form-label">Company Type</label>
+            <select
+              value={formData.companyType}
+              onChange={(e) => onInputChange('companyType', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black form-input"
-              placeholder="Enter business model"
-            />
+            >
+              <option value="">Select company type</option>
+              <option value="Startup">Startup</option>
+              <option value="Corporation">Corporation</option>
+              <option value="Non-profit">Non-profit</option>
+              <option value="Partnership">Partnership</option>
+              <option value="LLC">LLC</option>
+              <option value="Sole Proprietorship">Sole Proprietorship</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-black mb-1 form-label">Status</label>
+            <select
+              value={formData.status}
+              onChange={(e) => onInputChange('status', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black form-input"
+            >
+              <option value="">Select status</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="active">Active</option>
+            </select>
           </div>
         </div>
         <div className="space-y-4">
@@ -247,23 +273,23 @@ export default function StartupForm({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-black mb-1 form-label">Equity Offering (%)</label>
+            <label className="block text-sm font-medium text-black mb-1 form-label">Periodic Profit Sharing (%)</label>
             <input
               type="number"
-              value={formData.equityOffering}
-              onChange={(e) => onInputChange('equityOffering', e.target.value)}
+              value={formData.periodicProfitSharing}
+              onChange={(e) => onInputChange('periodicProfitSharing', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black form-input"
-              placeholder="Enter equity offering percentage"
+              placeholder="Enter periodic profit sharing percentage"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-black mb-1 form-label">Timeline</label>
+            <label className="block text-sm font-medium text-black mb-1 form-label">Website</label>
             <input
-              type="text"
-              value={formData.timeline}
-              onChange={(e) => onInputChange('timeline', e.target.value)}
+              type="url"
+              value={formData.website}
+              onChange={(e) => onInputChange('website', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black form-input"
-              placeholder="Enter timeline"
+              placeholder="Enter website URL"
             />
           </div>
         </div>
@@ -447,6 +473,47 @@ export default function StartupForm({
         </div>
       </div>
 
+      {/* Additional Optional Fields */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-black mb-1 form-label">Business Plan (Optional)</label>
+            <textarea
+              rows={3}
+              value={formData.businessPlan || ''}
+              onChange={(e) => onInputChange('businessPlan', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black form-input"
+              placeholder="Describe your business plan"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-black mb-1 form-label">Financial Projections (Optional)</label>
+            <textarea
+              rows={3}
+              value={formData.financialProjections || ''}
+              onChange={(e) => onInputChange('financialProjections', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black form-input"
+              placeholder="Describe your financial projections"
+            />
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="builtByCaffeineAI"
+              checked={formData.builtByCaffeineAI || false}
+              onChange={(e) => onInputChange('builtByCaffeineAI', e.target.checked.toString())}
+              className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
+            />
+            <label htmlFor="builtByCaffeineAI" className="text-sm font-medium text-black">
+              Built by Caffeine AI
+            </label>
+          </div>
+        </div>
+      </div>
+
       <TeamMembersSection
         teamMembers={teamMembers}
         onAddMember={onAddTeamMember}
@@ -490,6 +557,31 @@ export default function StartupForm({
               <p className="text-sm font-medium text-black">AI Generated NFT Image</p>
               <p className="text-xs text-black">This image will be used for the NFT representing ownership in the startup</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {aiGeneratedCompanyImages.length > 0 && (
+        <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="mb-3">
+            <p className="text-sm font-medium text-black">AI Generated Company Images</p>
+            <p className="text-xs text-black">These images will be used to showcase the startup</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {aiGeneratedCompanyImages.map((imageUrl, index) => (
+              <div key={index} className="relative">
+                <Image 
+                  src={imageUrl} 
+                  alt={`Company Image ${index + 1}`} 
+                  width={120}
+                  height={120}
+                  className="w-full h-24 rounded-lg object-cover border border-gray-200"
+                />
+                <div className="absolute bottom-1 left-1 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                  Image {index + 1}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

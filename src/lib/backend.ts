@@ -141,9 +141,25 @@ export class BackendService {
     investmentGoals: string;
     availableCapital: string;
     monthlyBudget: string;
+    bio?: string;
+    company?: string;
+    location?: string;
+    occupation?: string;
+    profilePhoto?: string;
   }) {
     if (!this.actor) throw new Error("Backend not initialized");
-    return await this.actor.registerInvestor(request);
+    
+    // Convert optional string fields to the expected format
+    const formattedRequest = {
+      ...request,
+      bio: request.bio ? [request.bio] as [] | [string] : [] as [] | [string],
+      company: request.company ? [request.company] as [] | [string] : [] as [] | [string],
+      location: request.location ? [request.location] as [] | [string] : [] as [] | [string],
+      occupation: request.occupation ? [request.occupation] as [] | [string] : [] as [] | [string],
+      profilePhoto: request.profilePhoto ? [request.profilePhoto] as [] | [string] : [] as [] | [string],
+    };
+    
+    return await this.actor.registerInvestor(formattedRequest);
   }
 
   async createStartup(request: StartupCreationRequest) {

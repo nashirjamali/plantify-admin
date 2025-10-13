@@ -72,7 +72,9 @@ export class SupabaseService {
     base64Data: string, 
     companyName: string
   ): Promise<ImageUploadResult> {
-    const sanitizedName = companyName
+    // Handle undefined or null company name
+    const safeCompanyName = companyName || 'unknown_company';
+    const sanitizedName = safeCompanyName
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '_')
       .substring(0, 50);
@@ -91,12 +93,29 @@ export class SupabaseService {
     base64Data: string, 
     memberName: string
   ): Promise<ImageUploadResult> {
-    const sanitizedName = memberName
+    // Handle undefined or null member name
+    const safeMemberName = memberName || 'unknown_member';
+    const sanitizedName = safeMemberName
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '_')
       .substring(0, 50);
     
     return this.uploadBase64Image(base64Data, `team_${sanitizedName}`, 'team-photos');
+  }
+
+  static async uploadCompanyImage(
+    base64Data: string, 
+    companyName: string,
+    imageIndex: number
+  ): Promise<ImageUploadResult> {
+    // Handle undefined or null company name
+    const safeCompanyName = companyName || 'unknown_company';
+    const sanitizedName = safeCompanyName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '_')
+      .substring(0, 50);
+    
+    return this.uploadBase64Image(base64Data, `company_${sanitizedName}_${imageIndex}`, 'company-images');
   }
 
   static async deleteImage(filePath: string): Promise<boolean> {

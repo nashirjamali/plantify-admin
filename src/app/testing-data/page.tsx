@@ -44,18 +44,15 @@ export default function TestingDataPage() {
 
   const [startupFormData, setStartupFormData] = useState({
     founderId: "",
-    companyName: "",
+    startupName: "",
     description: "",
-    industry: "",
-    businessModel: "",
+    sector: "",
+    companyType: "",
+    status: "",
     targetMarket: "",
     fundingGoal: "",
-    equityOffering: "",
-    timeline: "",
-    teamSize: "",
-    revenue: "",
+    periodicProfitSharing: "",
     website: "",
-    pitchDeck: "",
     // Additional backend fields
     foundedYear: "",
     competitiveAdvantage: "",
@@ -72,6 +69,13 @@ export default function TestingDataPage() {
     monthlyExpenses: "",
     problemStatement: "",
     founderBackground: "",
+    // Optional fields
+    businessPlan: "",
+    financialProjections: "",
+    companyImages: [] as string[],
+    companyLogo: "",
+    nftImage: "",
+    builtByCaffeineAI: false,
   });
 
   const [teamMembers, setTeamMembers] = useState<Array<{
@@ -86,6 +90,7 @@ export default function TestingDataPage() {
 
   const [aiGeneratedLogo, setAiGeneratedLogo] = useState<string>("");
   const [aiGeneratedNFTImage, setAiGeneratedNFTImage] = useState<string>("");
+  const [aiGeneratedCompanyImages, setAiGeneratedCompanyImages] = useState<string[]>([]);
 
   const [selectedStartup, setSelectedStartup] = useState<string>("");
   const [collateralAmount, setCollateralAmount] = useState<string>("");
@@ -118,8 +123,12 @@ export default function TestingDataPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleStartupInputChange = (field: string, value: string) => {
-    setStartupFormData(prev => ({ ...prev, [field]: value }));
+  const handleStartupInputChange = (field: string, value: string | boolean) => {
+    if (field === 'builtByCaffeineAI') {
+      setStartupFormData(prev => ({ ...prev, [field]: value === 'true' || value === true }));
+    } else {
+      setStartupFormData(prev => ({ ...prev, [field]: value }));
+    }
   };
 
   const addTeamMember = () => {
@@ -163,18 +172,15 @@ export default function TestingDataPage() {
       const aiData = await AIService.generateStartupData();
       setStartupFormData({
         founderId: startupFormData.founderId,
-        companyName: aiData.companyName,
+        startupName: aiData.startupName,
         description: aiData.description,
-        industry: aiData.industry,
-        businessModel: aiData.businessModel,
+        sector: aiData.sector,
+        companyType: aiData.companyType,
+        status: aiData.status,
         targetMarket: aiData.targetMarket,
         fundingGoal: aiData.fundingGoal,
-        equityOffering: aiData.equityOffering,
-        timeline: aiData.timeline,
-        teamSize: aiData.teamSize,
-        revenue: aiData.revenue,
+        periodicProfitSharing: aiData.periodicProfitSharing,
         website: aiData.website,
-        pitchDeck: aiData.pitchDeck,
         // Additional backend fields
         foundedYear: aiData.foundedYear,
         competitiveAdvantage: aiData.competitiveAdvantage,
@@ -191,10 +197,18 @@ export default function TestingDataPage() {
         monthlyExpenses: aiData.monthlyExpenses,
         problemStatement: aiData.problemStatement,
         founderBackground: aiData.founderBackground,
+        // Optional fields
+        businessPlan: aiData.businessPlan || "",
+        financialProjections: aiData.financialProjections || "",
+        companyImages: aiData.companyImages || [],
+        companyLogo: "",
+        nftImage: "",
+        builtByCaffeineAI: aiData.builtByCaffeineAI || false,
       });
       setTeamMembers(aiData.teamMembers);
       setAiGeneratedLogo(aiData.companyLogo);
       setAiGeneratedNFTImage(aiData.nftImage);
+      setAiGeneratedCompanyImages(aiData.companyImages || []);
     } catch (error) {
       console.error("Failed to generate startup AI data:", error);
       alert("Failed to generate startup AI data. Please check your API configuration.");
@@ -204,16 +218,14 @@ export default function TestingDataPage() {
   };
 
   const generateNFTImage = async () => {
-    if (!startupFormData.description || !startupFormData.industry) {
-      alert("Please fill in both description and industry fields before generating NFT image.");
+    if (!startupFormData.description || !startupFormData.sector) {
+      alert("Please fill in both description and sector fields before generating NFT image.");
       return;
     }
 
     try {
       const formData = {
         ...startupFormData,
-        sector: startupFormData.industry,
-        companyType: "Startup",
         teamMembers: teamMembers
       };
       
@@ -262,14 +274,14 @@ export default function TestingDataPage() {
       const nftImageToUse = aiGeneratedNFTImage || logoToUse;
       
       const startupRequest = {
-        status: "pending",
-        periodicProfitSharing: startupFormData.equityOffering || "0",
-        foundedYear: new Date().getFullYear().toString(),
-        competitiveAdvantage: startupFormData.businessModel || "Not specified",
-        businessPlan: [] as [] | [string],
+        status: startupFormData.status || "pending",
+        periodicProfitSharing: startupFormData.periodicProfitSharing || "0",
+        foundedYear: startupFormData.foundedYear || new Date().getFullYear().toString(),
+        competitiveAdvantage: startupFormData.competitiveAdvantage || "Not specified",
+        businessPlan: startupFormData.businessPlan ? [startupFormData.businessPlan] as [] | [string] : [] as [] | [string],
         description: startupFormData.description,
-        sector: startupFormData.industry,
-        useOfFunds: startupFormData.timeline || "Not specified",
+        sector: startupFormData.sector,
+        useOfFunds: startupFormData.useOfFunds || "Not specified",
         website: startupFormData.website,
         teamMembers: teamMembers.map((member, index) => ({
           id: BigInt(index + 1),
@@ -282,25 +294,26 @@ export default function TestingDataPage() {
           isFounder: member.isFounder,
         })),
         targetMarket: startupFormData.targetMarket,
-        revenueModel: "Not specified",
-        solution: startupFormData.description,
+        revenueModel: startupFormData.revenueModel || "Not specified",
+        solution: startupFormData.solution || startupFormData.description,
         companyLogo: logoToUse ? [logoToUse] as [] | [string] : [] as [] | [string],
-        nftImage: nftImageToUse ? [nftImageToUse] as [] | [string] : [] as [] | [string], // Use AI generated NFT image
-        companyType: "Startup",
-        financialProjections: [] as [] | [string],
-        marketingStrategy: "Not specified",
-        startupName: startupFormData.companyName,
+        nftImage: nftImageToUse ? [nftImageToUse] as [] | [string] : [] as [] | [string],
+        companyType: startupFormData.companyType || "Startup",
+        financialProjections: startupFormData.financialProjections ? [startupFormData.financialProjections] as [] | [string] : [] as [] | [string],
+        marketingStrategy: startupFormData.marketingStrategy || "Not specified",
+        startupName: startupFormData.startupName,
         fundingGoal: startupFormData.fundingGoal || "0",
-        legalDocuments: [] as [] | [string],
-        monthlyRevenue: "0",
-        operationalProcess: "Not specified",
-        advisors: "Not specified",
-        nftPrice: "0",
-        location: "Not specified",
-        monthlyExpenses: "0",
-        problemStatement: startupFormData.description,
-        founderBackground: "Not specified",
-        companyImages: [],
+        legalDocuments: startupFormData.legalDocuments ? [startupFormData.legalDocuments] as [] | [string] : [] as [] | [string],
+        monthlyRevenue: startupFormData.monthlyRevenue || "0",
+        operationalProcess: startupFormData.operationalProcess || "Not specified",
+        advisors: startupFormData.advisors || "Not specified",
+        nftPrice: startupFormData.nftPrice || "0",
+        location: startupFormData.location || "Not specified",
+        monthlyExpenses: startupFormData.monthlyExpenses || "0",
+        problemStatement: startupFormData.problemStatement || startupFormData.description,
+        founderBackground: startupFormData.founderBackground || "Not specified",
+        companyImages: aiGeneratedCompanyImages.length > 0 ? aiGeneratedCompanyImages : (startupFormData.companyImages || []),
+        builtByCaffeineAI: startupFormData.builtByCaffeineAI ? [startupFormData.builtByCaffeineAI] as [] | [boolean] : [] as [] | [boolean],
       };
 
       // Use admin function if founder is selected, otherwise use regular function
@@ -321,18 +334,15 @@ export default function TestingDataPage() {
 
       setStartupFormData({
         founderId: "",
-        companyName: "",
+        startupName: "",
         description: "",
-        industry: "",
-        businessModel: "",
+        sector: "",
+        companyType: "",
+        status: "",
         targetMarket: "",
         fundingGoal: "",
-        equityOffering: "",
-        timeline: "",
-        teamSize: "",
-        revenue: "",
+        periodicProfitSharing: "",
         website: "",
-        pitchDeck: "",
         foundedYear: "",
         competitiveAdvantage: "",
         useOfFunds: "",
@@ -348,9 +358,17 @@ export default function TestingDataPage() {
         monthlyExpenses: "",
         problemStatement: "",
         founderBackground: "",
+        businessPlan: "",
+        financialProjections: "",
+        companyImages: [],
+        companyLogo: "",
+        nftImage: "",
+        builtByCaffeineAI: false,
       });
       setTeamMembers([]);
       setAiGeneratedLogo("");
+      setAiGeneratedNFTImage("");
+      setAiGeneratedCompanyImages([]);
       await loadData();
       setCurrentStep(3);
       alert("Testing startup created successfully!");
@@ -502,6 +520,7 @@ export default function TestingDataPage() {
             teamMembers={teamMembers}
             aiGeneratedLogo={aiGeneratedLogo}
             aiGeneratedNFTImage={aiGeneratedNFTImage}
+            aiGeneratedCompanyImages={aiGeneratedCompanyImages}
             isGeneratingStartupAI={isGeneratingStartupAI}
             isCreatingStartup={isCreatingStartup}
             onInputChange={handleStartupInputChange}

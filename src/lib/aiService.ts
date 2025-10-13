@@ -53,18 +53,15 @@ export interface GeneratedImage {
 
 export interface StartupFormData {
   founderId: string;
-  companyName: string;
+  startupName: string;
   description: string;
-  industry: string;
-  businessModel: string;
+  sector: string;
+  companyType: string;
+  status: string;
   targetMarket: string;
   fundingGoal: string;
-  equityOffering: string;
-  timeline: string;
-  teamSize: string;
-  revenue: string;
+  periodicProfitSharing: string;
   website: string;
-  pitchDeck: string;
   foundedYear: string;
   competitiveAdvantage: string;
   useOfFunds: string;
@@ -80,8 +77,12 @@ export interface StartupFormData {
   monthlyExpenses: string;
   problemStatement: string;
   founderBackground: string;
-  sector: string;
-  companyType: string;
+  businessPlan?: string;
+  financialProjections?: string;
+  companyImages: string[];
+  companyLogo?: string;
+  nftImage?: string;
+  builtByCaffeineAI?: boolean;
   teamMembers: Array<{
     name: string;
     role: string;
@@ -104,20 +105,18 @@ export interface AIGeneratedTeamMember {
 }
 
 export interface AIGeneratedStartup {
-  companyName: string;
+  startupName: string;
   description: string;
-  industry: string;
-  businessModel: string;
+  sector: string;
+  companyType: string;
+  status: string;
   targetMarket: string;
   fundingGoal: string;
-  equityOffering: string;
-  timeline: string;
-  teamSize: string;
-  revenue: string;
+  periodicProfitSharing: string;
   website: string;
-  pitchDeck: string;
   companyLogo: string; // Supabase URL for logo
   nftImage: string; // Supabase URL for NFT image
+  companyImages: string[]; // Supabase URLs for company images
   teamMembers: AIGeneratedTeamMember[];
   // Additional backend fields
   foundedYear: string;
@@ -135,6 +134,10 @@ export interface AIGeneratedStartup {
   monthlyExpenses: string;
   problemStatement: string;
   founderBackground: string;
+  // Optional fields
+  businessPlan?: string;
+  financialProjections?: string;
+  builtByCaffeineAI?: boolean;
 }
 
 import { SupabaseService } from "./supabase";
@@ -540,18 +543,15 @@ Make the data realistic and diverse. Use different industries, experience levels
 
     const prompt = `Generate realistic startup data for testing a startup platform. Return ONLY a valid JSON object with these exact fields:
 {
-  "companyName": "string",
+  "startupName": "string",
   "description": "string",
-  "industry": "string",
-  "businessModel": "string",
+  "sector": "string",
+  "companyType": "string (one of: Startup, Corporation, Non-profit, Partnership, LLC, Sole Proprietorship)",
+  "status": "string (one of: pending, approved, rejected, active)",
   "targetMarket": "string",
   "fundingGoal": "string (number as string)",
-  "equityOffering": "string (percentage as string)",
-  "timeline": "string",
-  "teamSize": "string (number as string)",
-  "revenue": "string (number as string)",
+  "periodicProfitSharing": "string (percentage as string)",
   "website": "string (URL)",
-  "pitchDeck": "string (URL)",
   "foundedYear": "string (year as string)",
   "competitiveAdvantage": "string",
   "useOfFunds": "string",
@@ -567,6 +567,9 @@ Make the data realistic and diverse. Use different industries, experience levels
   "monthlyExpenses": "string (number as string)",
   "problemStatement": "string",
   "founderBackground": "string",
+  "businessPlan": "string (optional)",
+  "financialProjections": "string (optional)",
+  "builtByCaffeineAI": false,
   "teamMembers": [
     {
       "name": "string",
@@ -579,7 +582,7 @@ Make the data realistic and diverse. Use different industries, experience levels
   ]
 }
 
-Make the data realistic and diverse. Use different industries like fintech, healthtech, edtech, e-commerce, SaaS, etc. Generate 2-4 team members including at least one founder (isFounder: true) and other roles like CTO, CMO, COO, etc.`;
+Make the data realistic and diverse. Use different sectors like fintech, healthtech, edtech, e-commerce, SaaS, etc. Generate 2-4 team members including at least one founder (isFounder: true) and other roles like CTO, CMO, COO, etc.`;
 
     try {
       const response = await fetch(this.OPENROUTER_API_URL, {
@@ -641,26 +644,23 @@ Make the data realistic and diverse. Use different industries like fintech, heal
 
       // Generate company logo using Gemini
       const companyLogo = await this.generateCompanyLogo(
-        startupData.companyName,
-        startupData.industry
+        startupData.startupName,
+        startupData.sector
       );
       startupData.companyLogo = companyLogo;
 
       // Generate NFT image using the new function
       const formData: StartupFormData = {
         founderId: "temp",
-        companyName: startupData.companyName,
+        startupName: startupData.startupName,
         description: startupData.description,
-        industry: startupData.industry,
-        businessModel: startupData.businessModel,
+        sector: startupData.sector,
+        companyType: startupData.companyType,
+        status: startupData.status,
         targetMarket: startupData.targetMarket,
         fundingGoal: startupData.fundingGoal,
-        equityOffering: startupData.equityOffering,
-        timeline: startupData.timeline,
-        teamSize: startupData.teamSize,
-        revenue: startupData.revenue,
+        periodicProfitSharing: startupData.periodicProfitSharing,
         website: startupData.website,
-        pitchDeck: startupData.pitchDeck,
         foundedYear: startupData.foundedYear,
         competitiveAdvantage: startupData.competitiveAdvantage,
         useOfFunds: startupData.useOfFunds,
@@ -676,8 +676,12 @@ Make the data realistic and diverse. Use different industries like fintech, heal
         monthlyExpenses: startupData.monthlyExpenses,
         problemStatement: startupData.problemStatement,
         founderBackground: startupData.founderBackground,
-        sector: startupData.industry,
-        companyType: "Startup",
+        businessPlan: startupData.businessPlan,
+        financialProjections: startupData.financialProjections,
+        companyImages: [],
+        companyLogo: "",
+        nftImage: "",
+        builtByCaffeineAI: startupData.builtByCaffeineAI,
         teamMembers: startupData.teamMembers.map((member: AIGeneratedTeamMember) => ({
           name: member.name,
           role: member.role,
@@ -703,21 +707,27 @@ Make the data realistic and diverse. Use different industries like fintech, heal
         startupData.teamMembers[i].photo = photo;
       }
 
+      // Generate company images (2-4 images)
+      const companyImages = await this.generateCompanyImages(
+        startupData.startupName,
+        startupData.sector,
+        3 // Generate 3 company images
+      );
+      startupData.companyImages = companyImages;
+
       const requiredFields = [
-        "companyName",
+        "startupName",
         "description",
-        "industry",
-        "businessModel",
+        "sector",
+        "companyType",
+        "status",
         "targetMarket",
         "fundingGoal",
-        "equityOffering",
-        "timeline",
-        "teamSize",
-        "revenue",
+        "periodicProfitSharing",
         "website",
-        "pitchDeck",
         "companyLogo",
         "nftImage",
+        "companyImages",
         "teamMembers",
         "foundedYear",
         "competitiveAdvantage",
@@ -737,7 +747,7 @@ Make the data realistic and diverse. Use different industries like fintech, heal
       ];
 
       for (const field of requiredFields) {
-        if (field === "teamMembers") {
+        if (field === "teamMembers" || field === "companyImages") {
           if (
             !startupData[field] ||
             !Array.isArray(startupData[field]) ||
@@ -939,6 +949,93 @@ Create a professional, business-appropriate headshot that represents this team m
       );
       return uploadResult.url;
     }
+  }
+
+  static async generateCompanyImages(
+    companyName: string,
+    sector: string,
+    count: number = 3
+  ): Promise<string[]> {
+    if (!this.API_KEY) {
+      throw new Error("OpenRouter API key not configured");
+    }
+
+    const images: string[] = [];
+    
+    for (let i = 0; i < count; i++) {
+      try {
+        const prompt = `Generate a professional company image for a startup.
+Company Details:
+- Company Name: ${companyName}
+- Sector: ${sector}
+- Image Type: ${i === 0 ? 'Office/Workspace' : i === 1 ? 'Product/Service' : 'Team/Culture'}
+
+Create a professional, modern image that represents the company's brand and sector.`;
+
+        const response = await fetch(this.OPENROUTER_API_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.API_KEY}`,
+            "HTTP-Referer": this.SITE_URL,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-image-preview",
+            messages: [
+              {
+                role: "user",
+                content: prompt,
+              },
+            ],
+            modalities: ["image", "text"],
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `AI API request failed: ${response.status} ${response.statusText}`
+          );
+        }
+
+        const data = await response.json();
+
+        // Check for images in the response
+        const responseImages = data.choices?.[0]?.message?.images;
+        if (responseImages && responseImages.length > 0 && responseImages[0]?.image_url?.url) {
+          const base64Image = responseImages[0].image_url.url;
+          const cleanedBase64 = this.cleanupBase64Data(base64Image);
+
+          // Upload to Supabase and get URL
+          const uploadResult = await SupabaseService.uploadCompanyImage(
+            cleanedBase64,
+            companyName,
+            i
+          );
+          images.push(uploadResult.url);
+        } else {
+          // Fallback to default image
+          const fallbackBase64 = this.generateColoredPixel("#3B82F6");
+          const uploadResult = await SupabaseService.uploadCompanyImage(
+            fallbackBase64,
+            companyName,
+            i
+          );
+          images.push(uploadResult.url);
+        }
+      } catch (error) {
+        console.error(`Company image ${i} generation error:`, error);
+        // Add fallback image
+        const fallbackBase64 = this.generateColoredPixel("#3B82F6");
+        const uploadResult = await SupabaseService.uploadCompanyImage(
+          fallbackBase64,
+          companyName,
+          i
+        );
+        images.push(uploadResult.url);
+      }
+    }
+
+    return images;
   }
 
   private static generateColoredPixel(primaryColor: string): string {

@@ -139,6 +139,26 @@ export default function FounderForm({
               placeholder="Enter founder expertise and skills"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-black mb-1 form-label">ID Number</label>
+            <input
+              type="text"
+              value={formData.idNumber}
+              onChange={(e) => onInputChange('idNumber', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black form-input"
+              placeholder="Enter ID number"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-black mb-1 form-label">Tax Number</label>
+            <input
+              type="text"
+              value={formData.taxNumber}
+              onChange={(e) => onInputChange('taxNumber', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black form-input"
+              placeholder="Enter tax number"
+            />
+          </div>
         </div>
       </div>
 
