@@ -1,8 +1,8 @@
-import type { Investor, Startup, NFTInfo } from "../../declarations/plantify_backend/plantify_backend.did";
+import type { Investor, StartupSummary, NFTInfo } from "../../declarations/plantify_backend/plantify_backend.did";
 
 interface InvestorDataOverviewProps {
   investors: Investor[];
-  startups: Startup[];
+  startups: StartupSummary[];
   nfts: NFTInfo[];
 }
 
@@ -11,7 +11,7 @@ export default function InvestorDataOverview({
   startups,
   nfts,
 }: InvestorDataOverviewProps) {
-  const activeStartups = startups.filter(startup => startup.status === "Active");
+  const activeStartups = startups;
   const availableNFTs = nfts.filter(nft => nft.owner && nft.owner.owner);
 
   return (
@@ -119,16 +119,16 @@ export default function InvestorDataOverview({
                 <h4 className="font-medium text-gray-900 mb-2">
                   {startup.startupName || `Startup ${startup.id}`}
                 </h4>
-                <p className="text-sm text-gray-600 mb-2">{startup.sector}</p>
+                <p className="text-sm text-gray-600 mb-2">{startup.companyType}</p>
                 <p className="text-xs text-gray-500 mb-3 line-clamp-2">
                   {startup.description || "No description available"}
                 </p>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-green-600">
-                    ${parseInt(startup.fundingGoal || "0").toLocaleString()}
+                    ${startup.totalFunding}
                   </span>
                   <span className="text-xs text-gray-500">
-                    {startup.status}
+                    {startup.availableNFTs.toString()} NFTs
                   </span>
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { Button } from "../ui";
-import type { Startup, NFTInfo, Investor } from "../../declarations/plantify_backend/plantify_backend.did";
+import type { StartupSummary, NFTInfo, Investor } from "../../declarations/plantify_backend/plantify_backend.did";
 
 interface NFTPurchaseFormProps {
   formData: {
@@ -8,7 +8,7 @@ interface NFTPurchaseFormProps {
     quantity: string;
     purchaseAmount: string;
   };
-  startups: Startup[];
+  startups: StartupSummary[];
   investors: Investor[];
   nfts: NFTInfo[];
   isPurchasing: boolean;
@@ -35,7 +35,7 @@ export default function NFTPurchaseForm({
   // Debug logging
   console.log("NFTPurchaseForm - All startups:", startups);
   console.log("NFTPurchaseForm - Active startups:", activeStartups);
-  console.log("NFTPurchaseForm - Startup statuses:", startups.map(s => ({ id: s.id, name: s.startupName, status: s.status })));
+  console.log("NFTPurchaseForm - Startup summaries:", startups.map(s => ({ id: s.id, name: s.startupName })));
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -90,7 +90,7 @@ export default function NFTPurchaseForm({
             <option value="">Choose a startup</option>
             {activeStartups.map((startup) => (
               <option key={startup.id} value={startup.id}>
-                {startup.startupName || `Startup ${startup.id}`} - {startup.sector}
+                {startup.startupName || `Startup ${startup.id}`} - {startup.companyType}
               </option>
             ))}
           </select>
@@ -140,13 +140,13 @@ export default function NFTPurchaseForm({
                   <span className="font-medium">Name:</span> {selectedStartup.startupName || "N/A"}
                 </div>
                 <div>
-                  <span className="font-medium">Sector:</span> {selectedStartup.sector || "N/A"}
+                  <span className="font-medium">Company Type:</span> {selectedStartup.companyType || "N/A"}
                 </div>
                 <div>
-                  <span className="font-medium">Status:</span> {selectedStartup.status || "N/A"}
+                  <span className="font-medium">Available NFTs:</span> {selectedStartup.availableNFTs.toString() || "N/A"}
                 </div>
                 <div>
-                  <span className="font-medium">Funding Goal:</span> {selectedStartup.fundingGoal || "N/A"}
+                  <span className="font-medium">Total Funding:</span> {selectedStartup.totalFunding || "N/A"}
                 </div>
                 <div className="md:col-span-2">
                   <span className="font-medium">Description:</span> {selectedStartup.description || "N/A"}
