@@ -12,14 +12,14 @@ import {
   NFTPurchaseForm,
   InvestorDataOverview
 } from "../../components/investor-testing";
-import type { Investor, Startup, NFTInfo } from "../../declarations/plantify_backend/plantify_backend.did";
+import type { Investor, NFTInfo, StartupSummary } from "../../declarations/plantify_backend/plantify_backend.did";
 
 export default function InvestorTestingPage() {
   const { isAuthenticated, isLoading, principal } = useAuth();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
-  const [investors] = useState<Investor[]>([]);
-  const [startups, setStartups] = useState<Startup[]>([]);
+  const [investors, setInvestors] = useState<Investor[]>([]);
+  const [startups, setStartups] = useState<StartupSummary[]>([]);
   const [nfts, setNfts] = useState<NFTInfo[]>([]);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -45,6 +45,7 @@ export default function InvestorTestingPage() {
 
   const [purchaseFormData, setPurchaseFormData] = useState({
     selectedStartup: "",
+    selectedInvestor: "",
     quantity: "",
     purchaseAmount: "",
   });
@@ -53,12 +54,15 @@ export default function InvestorTestingPage() {
     if (isAuthenticated) {
       try {
         console.log("Loading data for investor testing...");
-        const startupsData = await backendService.getAllStartups();
+        const startupsData = await backendService.getStartupsPaginated({ page: 1, limit: 100 });
         const nftsData = await backendService.getAllNFTs();
-        console.log("Loaded startups:", startupsData);
-        console.log("Startup statuses:", startupsData.map(s => ({ id: s.id, name: s.startupName, status: s.status })));
-        setStartups(startupsData);
+        const investorsData = await backendService.getInvestors();
+        console.log("Loaded startups:", startupsData.startups);
+        console.log("Loaded investors:", investorsData);
+        console.log("Startup summaries:", startupsData.startups.map(s => ({ id: s.id, name: s.startupName })));
+        setStartups(startupsData.startups);
         setNfts(nftsData);
+        setInvestors(investorsData);
       } catch (error) {
         console.error("Failed to load data:", error);
       }
@@ -143,8 +147,8 @@ export default function InvestorTestingPage() {
   };
 
   const purchaseNFT = async () => {
-    if (!purchaseFormData.selectedStartup || !purchaseFormData.quantity) {
-      alert("Please select a startup and enter quantity");
+    if (!purchaseFormData.selectedStartup || !purchaseFormData.selectedInvestor || !purchaseFormData.quantity) {
+      alert("Please select a startup, investor, and enter quantity");
       return;
     }
     
@@ -161,12 +165,12 @@ export default function InvestorTestingPage() {
     
     setIsPurchasing(true);
     try {
-      // Use the real backend purchaseNFT function
+      // Use the real backend purchaseNFT function with selected investor
       const result = await backendService.purchaseNFT({
         startupId: purchaseFormData.selectedStartup,
-        investorId: "test-investor", // For testing purposes - in real app this would be the logged-in investor ID
+        investorId: purchaseFormData.selectedInvestor,
         quantity: quantity,
-        memo: `NFT purchase for startup ${purchaseFormData.selectedStartup}`,
+        memo: `NFT purchase for startup ${purchaseFormData.selectedStartup} by investor ${purchaseFormData.selectedInvestor}`,
       });
       
       if ('Error' in result) {
@@ -176,6 +180,7 @@ export default function InvestorTestingPage() {
       const success = result.Success;
       setPurchaseFormData({
         selectedStartup: "",
+        selectedInvestor: "",
         quantity: "",
         purchaseAmount: "",
       });
@@ -257,6 +262,7 @@ export default function InvestorTestingPage() {
           <NFTPurchaseForm
             formData={purchaseFormData}
             startups={startups}
+            investors={investors}
             nfts={nfts}
             isPurchasing={isPurchasing}
             onInputChange={handlePurchaseInputChange}

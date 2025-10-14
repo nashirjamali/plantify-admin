@@ -23,6 +23,7 @@ import type {
   MintNFTResponse,
   NFTPurchaseRequest,
   NFTPurchaseResponse,
+  PaginatedStartups,
 } from "../declarations/plantify_backend/plantify_backend.did";
 
 type NFTStats = {
@@ -85,7 +86,9 @@ export interface BackendActor {
   getAllNFTs: () => Promise<NFTInfo[]>;
   getNFTStats: () => Promise<NFTStats>;
   getFounders: () => Promise<Founder[]>;
+  getInvestors: () => Promise<Investor[]>;
   getAllStartups: () => Promise<Startup[]>;
+  getStartupsPaginated: (params: { page: bigint; limit: bigint }) => Promise<PaginatedStartups>;
   updateStartupStatus: (startupId: string, status: string) => Promise<boolean>;
   purchaseNFT: (request: NFTPurchaseRequest) => Promise<NFTPurchaseResponse>;
 }
@@ -261,9 +264,22 @@ export class BackendService {
     return await this.actor.getFounders();
   }
 
+  async getInvestors() {
+    if (!this.actor) throw new Error("Backend not initialized");
+    return await this.actor.getInvestors();
+  }
+
   async getAllStartups() {
     if (!this.actor) throw new Error("Backend not initialized");
     return await this.actor.getAllStartups();
+  }
+
+  async getStartupsPaginated(params: { page: number; limit: number }) {
+    if (!this.actor) throw new Error("Backend not initialized");
+    return await this.actor.getStartupsPaginated({
+      page: BigInt(params.page),
+      limit: BigInt(params.limit)
+    });
   }
 
   async updateStartupStatus(startupId: string, status: string) {

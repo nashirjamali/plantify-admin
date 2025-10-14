@@ -1,13 +1,15 @@
 import { Button } from "../ui";
-import type { Startup, NFTInfo } from "../../declarations/plantify_backend/plantify_backend.did";
+import type { Startup, NFTInfo, Investor } from "../../declarations/plantify_backend/plantify_backend.did";
 
 interface NFTPurchaseFormProps {
   formData: {
     selectedStartup: string;
+    selectedInvestor: string;
     quantity: string;
     purchaseAmount: string;
   };
   startups: Startup[];
+  investors: Investor[];
   nfts: NFTInfo[];
   isPurchasing: boolean;
   onInputChange: (field: string, value: string) => void;
@@ -19,6 +21,7 @@ interface NFTPurchaseFormProps {
 export default function NFTPurchaseForm({
   formData,
   startups,
+  investors,
   nfts,
   isPurchasing,
   onInputChange,
@@ -57,6 +60,24 @@ export default function NFTPurchaseForm({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Select Investor *
+          </label>
+          <select
+            value={formData.selectedInvestor}
+            onChange={(e) => onInputChange("selectedInvestor", e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Choose an investor</option>
+            {investors.map((investor) => (
+              <option key={investor.id} value={investor.id}>
+                {investor.fullName} - {investor.email}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Select Startup *
@@ -136,10 +157,13 @@ export default function NFTPurchaseForm({
         </div>
       )}
 
-      {formData.quantity && formData.selectedStartup && (
+      {formData.quantity && formData.selectedStartup && formData.selectedInvestor && (
         <div className="mt-6 p-4 bg-green-50 rounded-lg">
           <h3 className="text-lg font-medium text-green-900 mb-2">Purchase Summary</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="font-medium">Investor:</span> {investors.find(i => i.id === formData.selectedInvestor)?.fullName || "N/A"}
+            </div>
             <div>
               <span className="font-medium">Startup:</span> {activeStartups.find(s => s.id === formData.selectedStartup)?.startupName || "N/A"}
             </div>
@@ -167,7 +191,7 @@ export default function NFTPurchaseForm({
 
         <Button
           onClick={onPurchase}
-          disabled={isPurchasing || !formData.selectedStartup || !formData.quantity}
+          disabled={isPurchasing || !formData.selectedStartup || !formData.selectedInvestor || !formData.quantity}
           className="flex items-center gap-2"
         >
           {isPurchasing ? (
