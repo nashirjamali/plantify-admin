@@ -11,7 +11,7 @@ export default function InvestorDataOverview({
   startups,
   nfts,
 }: InvestorDataOverviewProps) {
-  const activeStartups = startups.filter(startup => startup.status === "active");
+  const activeStartups = startups.filter(startup => startup.status === "Active");
   const availableNFTs = nfts.filter(nft => nft.owner && nft.owner.owner);
 
   return (

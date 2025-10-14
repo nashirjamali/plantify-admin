@@ -72,6 +72,13 @@ export default function InvestorTestingPage() {
     loadData();
   }, [isAuthenticated, loadData]);
 
+  // Refresh data when currentStep changes to NFT purchase step
+  useEffect(() => {
+    if (currentStep === 2) {
+      loadData();
+    }
+  }, [currentStep, loadData]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };

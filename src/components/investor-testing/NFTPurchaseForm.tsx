@@ -24,7 +24,7 @@ export default function NFTPurchaseForm({
   onPurchase,
   onBack,
 }: NFTPurchaseFormProps) {
-  const activeStartups = startups.filter(startup => startup.status === "active");
+  const activeStartups = startups.filter(startup => startup.status === "Active");
   const availableNFTs = nfts.filter(nft => nft.owner && nft.owner.owner);
 
   return (
