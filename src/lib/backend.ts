@@ -92,7 +92,7 @@ export class BackendService {
   private agent: HttpAgent | null = null;
 
   async initialize(identity: Identity) {
-    const canisterId = "a5ptu-ryaaa-aaaai-q32cq-cai"; // Mainnet canister ID from dfx.json
+    const canisterId = "oncwy-yqaaa-aaaae-qfzja-cai"; // Mainnet canister ID from dfx.json
 
     this.agent = new HttpAgent({
       host: "https://ic0.app",
