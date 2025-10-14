@@ -15,10 +15,10 @@ import {
 import type { Investor, Startup, NFTInfo } from "../../declarations/plantify_backend/plantify_backend.did";
 
 export default function InvestorTestingPage() {
-  const { isAuthenticated, isLoading, principal } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
-  const [investors, setInvestors] = useState<Investor[]>([]);
+  const [investors] = useState<Investor[]>([]);
   const [startups, setStartups] = useState<Startup[]>([]);
   const [nfts, setNfts] = useState<NFTInfo[]>([]);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -45,7 +45,7 @@ export default function InvestorTestingPage() {
 
   const [purchaseFormData, setPurchaseFormData] = useState({
     selectedStartup: "",
-    selectedNFT: "",
+    quantity: "",
     purchaseAmount: "",
   });
 
@@ -126,28 +126,49 @@ export default function InvestorTestingPage() {
   };
 
   const purchaseNFT = async () => {
-    if (!purchaseFormData.selectedStartup || !purchaseFormData.selectedNFT) {
-      alert("Please select a startup and NFT to purchase");
+    if (!purchaseFormData.selectedStartup || !purchaseFormData.quantity) {
+      alert("Please select a startup and enter quantity");
+      return;
+    }
+    
+    if (!purchaseFormData.purchaseAmount || parseFloat(purchaseFormData.purchaseAmount) <= 0) {
+      alert("Please enter a valid purchase amount");
+      return;
+    }
+    
+    const quantity = parseInt(purchaseFormData.quantity);
+    if (quantity <= 0) {
+      alert("Please enter a valid quantity");
       return;
     }
     
     setIsPurchasing(true);
     try {
-      // For now, we'll simulate the NFT purchase
-      // In a real implementation, this would call the backend to purchase the NFT
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      // Use the real backend purchaseNFT function
+      const result = await backendService.purchaseNFT({
+        startupId: purchaseFormData.selectedStartup,
+        investorId: "test-investor", // For testing purposes - in real app this would be the logged-in investor ID
+        quantity: quantity,
+        memo: `NFT purchase for startup ${purchaseFormData.selectedStartup}`,
+      });
       
+      if ('Error' in result) {
+        throw new Error(result.Error);
+      }
+      
+      const success = result.Success;
       setPurchaseFormData({
         selectedStartup: "",
-        selectedNFT: "",
+        quantity: "",
         purchaseAmount: "",
       });
       await loadData();
       setCurrentStep(1);
-      alert("NFT purchased successfully!");
+      alert(`NFT purchased successfully! Transaction ID: ${success.transactionId}. Token IDs: ${success.tokenIds.join(', ')}`);
     } catch (error) {
       console.error("Failed to purchase NFT:", error);
-      alert("Failed to purchase NFT. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      alert(`Failed to purchase NFT: ${errorMessage}`);
     } finally {
       setIsPurchasing(false);
     }

@@ -4,7 +4,7 @@ import type { Startup, NFTInfo } from "../../declarations/plantify_backend/plant
 interface NFTPurchaseFormProps {
   formData: {
     selectedStartup: string;
-    selectedNFT: string;
+    quantity: string;
     purchaseAmount: string;
   };
   startups: Startup[];
@@ -32,7 +32,7 @@ export default function NFTPurchaseForm({
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-900">Purchase NFT</h2>
         <div className="text-sm text-gray-500">
-          {activeStartups.length} active startups, {availableNFTs.length} available NFTs
+          {activeStartups.length} active startups, {availableNFTs.length} existing NFTs
         </div>
       </div>
 
@@ -57,20 +57,17 @@ export default function NFTPurchaseForm({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select NFT *
+            Quantity *
           </label>
-          <select
-            value={formData.selectedNFT}
-            onChange={(e) => onInputChange("selectedNFT", e.target.value)}
+          <input
+            type="number"
+            value={formData.quantity}
+            onChange={(e) => onInputChange("quantity", e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Choose an NFT</option>
-            {availableNFTs.map((nft) => (
-              <option key={nft.tokenId} value={nft.tokenId.toString()}>
-                NFT #{nft.tokenId} - {nft.metadata.name?.[0] || "Unnamed NFT"}
-              </option>
-            ))}
-          </select>
+            placeholder="Enter quantity"
+            min="1"
+            step="1"
+          />
         </div>
 
         <div>
@@ -119,37 +116,24 @@ export default function NFTPurchaseForm({
         </div>
       )}
 
-      {formData.selectedNFT && (
+      {formData.quantity && formData.selectedStartup && (
         <div className="mt-6 p-4 bg-green-50 rounded-lg">
-          <h3 className="text-lg font-medium text-green-900 mb-2">Selected NFT Details</h3>
-          {(() => {
-            const selectedNFT = availableNFTs.find(n => n.tokenId.toString() === formData.selectedNFT);
-            if (!selectedNFT) return null;
-            
-            return (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium">Token ID:</span> #{selectedNFT.tokenId}
-                </div>
-                <div>
-                  <span className="font-medium">Name:</span> {selectedNFT.metadata.name?.[0] || "Unnamed NFT"}
-                </div>
-                <div className="md:col-span-2">
-                  <span className="font-medium">Description:</span> {selectedNFT.metadata.description?.[0] || "No description"}
-                </div>
-                {selectedNFT.metadata.image && selectedNFT.metadata.image.length > 0 && (
-                  <div className="md:col-span-2">
-                    <span className="font-medium">Image:</span>
-                    <img 
-                      src={selectedNFT.metadata.image[0]} 
-                      alt="NFT" 
-                      className="mt-2 w-32 h-32 object-cover rounded-lg"
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })()}
+          <h3 className="text-lg font-medium text-green-900 mb-2">Purchase Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="font-medium">Startup:</span> {activeStartups.find(s => s.id === formData.selectedStartup)?.startupName || "N/A"}
+            </div>
+            <div>
+              <span className="font-medium">Quantity:</span> {formData.quantity} NFT(s)
+            </div>
+            <div>
+              <span className="font-medium">Amount:</span> {formData.purchaseAmount || "0"} ICP
+            </div>
+            <div>
+              <span className="font-medium">Total:</span> {formData.purchaseAmount && formData.quantity ? 
+                (parseFloat(formData.purchaseAmount) * parseInt(formData.quantity)).toFixed(2) : "0"} ICP
+            </div>
+          </div>
         </div>
       )}
 
@@ -163,7 +147,7 @@ export default function NFTPurchaseForm({
 
         <Button
           onClick={onPurchase}
-          disabled={isPurchasing || !formData.selectedStartup || !formData.selectedNFT}
+          disabled={isPurchasing || !formData.selectedStartup || !formData.quantity}
           className="flex items-center gap-2"
         >
           {isPurchasing ? (

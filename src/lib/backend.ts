@@ -21,6 +21,8 @@ import type {
   TransferResponse,
   TopUpResponse,
   MintNFTResponse,
+  NFTPurchaseRequest,
+  NFTPurchaseResponse,
 } from "../declarations/plantify_backend/plantify_backend.did";
 
 type NFTStats = {
@@ -85,6 +87,7 @@ export interface BackendActor {
   getFounders: () => Promise<Founder[]>;
   getAllStartups: () => Promise<Startup[]>;
   updateStartupStatus: (startupId: string, status: string) => Promise<boolean>;
+  purchaseNFT: (request: NFTPurchaseRequest) => Promise<NFTPurchaseResponse>;
 }
 
 export class BackendService {
@@ -266,6 +269,24 @@ export class BackendService {
   async updateStartupStatus(startupId: string, status: string) {
     if (!this.actor) throw new Error("Backend not initialized");
     return await this.actor.updateStartupStatus(startupId, status);
+  }
+
+  async purchaseNFT(request: {
+    startupId: string;
+    investorId: string;
+    quantity: number;
+    memo?: string;
+  }) {
+    if (!this.actor) throw new Error("Backend not initialized");
+    
+    const purchaseRequest: NFTPurchaseRequest = {
+      startupId: request.startupId,
+      investorId: request.investorId,
+      quantity: BigInt(request.quantity),
+      memo: request.memo ? [request.memo] as [] | [string] : [] as [] | [string],
+    };
+    
+    return await this.actor.purchaseNFT(purchaseRequest);
   }
 
   async mintNFTForStartup(
