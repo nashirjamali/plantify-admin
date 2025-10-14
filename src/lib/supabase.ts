@@ -103,6 +103,20 @@ export class SupabaseService {
     return this.uploadBase64Image(base64Data, `team_${sanitizedName}`, 'team-photos');
   }
 
+  static async uploadInvestorProfilePhoto(
+    base64Data: string, 
+    investorName: string
+  ): Promise<ImageUploadResult> {
+    // Handle undefined or null investor name
+    const safeInvestorName = investorName || 'unknown_investor';
+    const sanitizedName = safeInvestorName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '_')
+      .substring(0, 50);
+    
+    return this.uploadBase64Image(base64Data, `investor_${sanitizedName}`, 'investor-photos');
+  }
+
   static async uploadCompanyImage(
     base64Data: string, 
     companyName: string,

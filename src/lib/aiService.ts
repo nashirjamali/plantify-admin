@@ -11,6 +11,24 @@ export interface AIGeneratedFounder {
   taxNumber: string;
 }
 
+export interface AIGeneratedInvestor {
+  fullName: string;
+  email: string;
+  phone: string;
+  country: string;
+  city: string;
+  investmentExperience: string;
+  riskTolerance: string;
+  investmentGoals: string;
+  availableCapital: string;
+  monthlyBudget: string;
+  bio: string;
+  company: string;
+  location: string;
+  occupation: string;
+  profilePhoto: string;
+}
+
 export interface NFTImagePrompt {
   object: {
     type: string;
@@ -536,6 +554,133 @@ Make the data realistic and diverse. Use different industries, experience levels
     }
   }
 
+  static async generateInvestorData(): Promise<AIGeneratedInvestor> {
+    if (!this.API_KEY) {
+      throw new Error("OpenRouter API key not configured");
+    }
+
+    const prompt = `Generate realistic investor registration data for testing a startup platform. Return ONLY a valid JSON object with these exact fields:
+{
+  "fullName": "string",
+  "email": "string", 
+  "phone": "string",
+  "country": "string",
+  "city": "string",
+  "investmentExperience": "string (number of years)",
+  "riskTolerance": "string (one of: Conservative, Moderate, Aggressive)",
+  "investmentGoals": "string",
+  "availableCapital": "string (number as string)",
+  "monthlyBudget": "string (number as string)",
+  "bio": "string",
+  "company": "string",
+  "location": "string",
+  "occupation": "string",
+  "profilePhoto": "string (URL placeholder)"
+}
+
+Make the data realistic and diverse. Use different investment backgrounds like angel investors, VCs, corporate investors, family offices, etc.`;
+
+    try {
+      const response = await fetch(this.OPENROUTER_API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.API_KEY}`,
+          "HTTP-Referer": this.SITE_URL,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-4o",
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          temperature: 0.8,
+          max_tokens: 1000,
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `AI API request failed: ${response.status} ${response.statusText}`
+        );
+      }
+      const data = await response.json();
+
+      const content = data.choices?.[0]?.message?.content;
+
+      if (!content) {
+        throw new Error("No content received from AI API");
+      }
+
+      let jsonContent = content.trim();
+
+      const jsonMatch = jsonContent.match(
+        /```(?:json)?\s*(\{[\s\S]*?\})\s*```/
+      );
+      if (jsonMatch) {
+        jsonContent = jsonMatch[1];
+      } else {
+        if (jsonContent.startsWith("```json")) {
+          jsonContent = jsonContent
+            .replace(/^```json\s*/, "")
+            .replace(/\s*```$/, "");
+        } else if (jsonContent.startsWith("```")) {
+          jsonContent = jsonContent
+            .replace(/^```\s*/, "")
+            .replace(/\s*```$/, "");
+        }
+      }
+
+      console.log("Cleaned JSON:", jsonContent);
+
+      const investorData = JSON.parse(jsonContent);
+
+      // Generate profile photo using Gemini
+      const profilePhoto = await this.generateInvestorProfilePhoto(
+        investorData.fullName,
+        investorData.occupation,
+        investorData.company
+      );
+      investorData.profilePhoto = profilePhoto;
+
+      const requiredFields = [
+        "fullName",
+        "email",
+        "phone",
+        "country",
+        "city",
+        "investmentExperience",
+        "riskTolerance",
+        "investmentGoals",
+        "availableCapital",
+        "monthlyBudget",
+        "bio",
+        "company",
+        "location",
+        "occupation",
+        "profilePhoto",
+      ];
+
+      for (const field of requiredFields) {
+        if (!investorData[field] || typeof investorData[field] !== "string") {
+          throw new Error(`Invalid or missing field: ${field}`);
+        }
+      }
+
+      return investorData as AIGeneratedInvestor;
+    } catch (error) {
+      console.error("AI generation error:", error);
+      throw new Error(
+        `Failed to generate investor data: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
   static async generateStartupData(): Promise<AIGeneratedStartup> {
     if (!this.API_KEY) {
       throw new Error("OpenRouter API key not configured");
@@ -944,6 +1089,84 @@ Create a professional, business-appropriate headshot that represents this team m
       // Return a fallback professional photo uploaded to Supabase
       const fallbackBase64 = this.generateColoredPixel("#3B82F6");
       const uploadResult = await SupabaseService.uploadTeamMemberPhoto(
+        fallbackBase64,
+        name
+      );
+      return uploadResult.url;
+    }
+  }
+
+  static async generateInvestorProfilePhoto(
+    name: string,
+    occupation: string,
+    company: string
+  ): Promise<string> {
+    if (!this.API_KEY) {
+      throw new Error("OpenRouter API key not configured");
+    }
+
+    const prompt = `Generate a professional headshot photo for an investor.
+Investor Details:
+- Name: ${name}
+- Occupation: ${occupation}
+- Company: ${company}
+
+Create a professional, business-appropriate headshot that represents this investor's role and company.`;
+
+    try {
+      const response = await fetch(this.OPENROUTER_API_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.API_KEY}`,
+          "HTTP-Referer": this.SITE_URL,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image-preview",
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          modalities: ["image", "text"],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `AI API request failed: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+
+      // Check for images in the new response format
+      const images = data.choices?.[0]?.message?.images;
+      if (images && images.length > 0 && images[0]?.image_url?.url) {
+        const base64Image = images[0].image_url.url;
+        const cleanedBase64 = this.cleanupBase64Data(base64Image);
+
+        // Upload to Supabase and return URL
+        const uploadResult = await SupabaseService.uploadInvestorProfilePhoto(
+          cleanedBase64,
+          name
+        );
+        return uploadResult.url;
+      }
+
+      // Fallback to default professional photo
+      const fallbackBase64 = this.generateColoredPixel("#3B82F6");
+      const uploadResult = await SupabaseService.uploadInvestorProfilePhoto(
+        fallbackBase64,
+        name
+      );
+      return uploadResult.url;
+    } catch (error) {
+      console.error("Investor profile photo generation error:", error);
+      // Return a fallback professional photo uploaded to Supabase
+      const fallbackBase64 = this.generateColoredPixel("#3B82F6");
+      const uploadResult = await SupabaseService.uploadInvestorProfilePhoto(
         fallbackBase64,
         name
       );

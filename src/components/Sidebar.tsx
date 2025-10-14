@@ -26,6 +26,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: "loading",
     },
     {
+      name: "Investor Testing",
+      href: "/investor-testing",
+      icon: "check",
+    },
+    {
       name: "Review Startups",
       href: "/review-startups",
       icon: "check",
