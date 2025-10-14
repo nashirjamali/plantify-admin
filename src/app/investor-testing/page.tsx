@@ -52,8 +52,11 @@ export default function InvestorTestingPage() {
   const loadData = useCallback(async () => {
     if (isAuthenticated) {
       try {
+        console.log("Loading data for investor testing...");
         const startupsData = await backendService.getAllStartups();
         const nftsData = await backendService.getAllNFTs();
+        console.log("Loaded startups:", startupsData);
+        console.log("Startup statuses:", startupsData.map(s => ({ id: s.id, name: s.startupName, status: s.status })));
         setStartups(startupsData);
         setNfts(nftsData);
       } catch (error) {
@@ -78,6 +81,13 @@ export default function InvestorTestingPage() {
       loadData();
     }
   }, [currentStep, loadData]);
+
+  // Force refresh data when component mounts
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadData();
+    }
+  }, [isAuthenticated, loadData]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -227,6 +237,7 @@ export default function InvestorTestingPage() {
             onInputChange={handlePurchaseInputChange}
             onPurchase={purchaseNFT}
             onBack={() => setCurrentStep(1)}
+            onRefresh={loadData}
           />
         )}
 

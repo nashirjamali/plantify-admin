@@ -13,6 +13,7 @@ interface NFTPurchaseFormProps {
   onInputChange: (field: string, value: string) => void;
   onPurchase: () => void;
   onBack: () => void;
+  onRefresh?: () => void;
 }
 
 export default function NFTPurchaseForm({
@@ -23,16 +24,35 @@ export default function NFTPurchaseForm({
   onInputChange,
   onPurchase,
   onBack,
+  onRefresh,
 }: NFTPurchaseFormProps) {
-  const activeStartups = startups.filter(startup => startup.status === "Active");
-  const availableNFTs = nfts.filter(nft => nft.owner && nft.owner.owner);
+  const activeStartups = startups;
+  const availableNFTs = nfts;
+
+  // Debug logging
+  console.log("NFTPurchaseForm - All startups:", startups);
+  console.log("NFTPurchaseForm - Active startups:", activeStartups);
+  console.log("NFTPurchaseForm - Startup statuses:", startups.map(s => ({ id: s.id, name: s.startupName, status: s.status })));
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-900">Purchase NFT</h2>
-        <div className="text-sm text-gray-500">
-          {activeStartups.length} active startups, {availableNFTs.length} existing NFTs
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-500">
+            {activeStartups.length} active startups, {availableNFTs.length} existing NFTs
+          </div>
+          {onRefresh && (
+            <Button
+              onClick={onRefresh}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <span>🔄</span>
+              Refresh
+            </Button>
+          )}
         </div>
       </div>
 
