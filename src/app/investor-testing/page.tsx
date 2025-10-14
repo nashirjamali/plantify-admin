@@ -15,7 +15,7 @@ import {
 import type { Investor, Startup, NFTInfo } from "../../declarations/plantify_backend/plantify_backend.did";
 
 export default function InvestorTestingPage() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, principal } = useAuth();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [investors] = useState<Investor[]>([]);
@@ -214,6 +214,31 @@ export default function InvestorTestingPage() {
   return (
     <Layout title="Investor Testing Data Flow">
       <div className="space-y-6">
+        {/* Principal ID Display */}
+        {principal && (
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-blue-900">Current Principal ID</h3>
+                <p className="text-xs text-blue-700 mt-1">
+                  {principal.toString().slice(0, 20)}...
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(principal.toString());
+                  alert('Principal ID copied to clipboard!');
+                }}
+                className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700 transition-colors"
+                title="Copy full Principal ID"
+              >
+                <span>📋</span>
+                Copy
+              </button>
+            </div>
+          </div>
+        )}
+
         <ProgressSteps currentStep={currentStep} steps={steps} />
 
         {currentStep === 1 && (

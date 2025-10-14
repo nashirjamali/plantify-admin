@@ -105,9 +105,24 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-black truncate">Admin User</p>
-                <p className="text-xs text-black truncate">
-                  {principal?.toString().slice(0, 8)}...
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-black truncate">
+                    {principal?.toString().slice(0, 8)}...
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (principal) {
+                        navigator.clipboard.writeText(principal.toString());
+                        // You could add a toast notification here
+                        alert('Principal ID copied to clipboard!');
+                      }
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer"
+                    title="Copy full Principal ID"
+                  >
+                    📋
+                  </button>
+                </div>
               </div>
             </div>
           </div>
