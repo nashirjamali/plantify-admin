@@ -132,8 +132,19 @@ export default function NFTPurchaseForm({
         transferResult: { blockIndex: transferResult.Ok!.blockIndex },
       });
 
-      // Call the original onPurchase to handle success
-      onPurchase();
+      // Reset form and refresh data
+      onInputChange("selectedStartup", "");
+      onInputChange("selectedInvestor", "");
+      onInputChange("quantity", "");
+      onInputChange("purchaseAmount", "");
+      
+      // Refresh data if onRefresh is provided
+      if (onRefresh) {
+        onRefresh();
+      }
+      
+      // Show success message
+      alert(`NFT purchased successfully! Transaction ID: ${transferResult.Ok!.blockIndex.toString()}`);
 
     } catch (error) {
       console.error("Purchase failed:", error);
