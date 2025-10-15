@@ -1,5 +1,9 @@
+import { useState } from "react";
 import { Button } from "../ui";
 import type { StartupSummary, NFTInfo, Investor } from "../../declarations/plantify_backend/plantify_backend.did";
+import { backendService } from "../../lib/backend";
+import { icrcService } from "../../lib/icrcService";
+import { Principal } from "@dfinity/principal";
 
 interface NFTPurchaseFormProps {
   formData: {
@@ -11,11 +15,18 @@ interface NFTPurchaseFormProps {
   startups: StartupSummary[];
   investors: Investor[];
   nfts: NFTInfo[];
-  isPurchasing: boolean;
   onInputChange: (field: string, value: string) => void;
   onPurchase: () => void;
   onBack: () => void;
   onRefresh?: () => void;
+}
+
+interface PurchaseState {
+  step: 'idle' | 'getting-info' | 'transferring' | 'completing' | 'success' | 'error';
+  plantifyAccount?: string;
+  nftPrice?: bigint;
+  transferResult?: { blockIndex: bigint };
+  error?: string;
 }
 
 export default function NFTPurchaseForm({
@@ -23,12 +34,13 @@ export default function NFTPurchaseForm({
   startups,
   investors,
   nfts,
-  isPurchasing,
   onInputChange,
   onPurchase,
   onBack,
   onRefresh,
 }: NFTPurchaseFormProps) {
+  const [purchaseState, setPurchaseState] = useState<PurchaseState>({ step: 'idle' });
+  
   const activeStartups = startups;
   const availableNFTs = nfts;
 
@@ -36,6 +48,101 @@ export default function NFTPurchaseForm({
   console.log("NFTPurchaseForm - All startups:", startups);
   console.log("NFTPurchaseForm - Active startups:", activeStartups);
   console.log("NFTPurchaseForm - Startup summaries:", startups.map(s => ({ id: s.id, name: s.startupName })));
+
+  const handleNewPurchase = async () => {
+    if (!formData.selectedStartup || !formData.selectedInvestor || !formData.quantity) {
+      alert("Please select a startup, investor, and enter quantity");
+      return;
+    }
+
+    const quantity = parseInt(formData.quantity);
+    if (quantity <= 0) {
+      alert("Please enter a valid quantity");
+      return;
+    }
+
+    try {
+      setPurchaseState({ step: 'getting-info' });
+
+      // Step 1: Get purchase information
+      const purchaseRequest = {
+        startupId: formData.selectedStartup,
+        investorId: formData.selectedInvestor,
+        quantity: quantity,
+        memo: `NFT purchase for startup ${formData.selectedStartup} by investor ${formData.selectedInvestor}`,
+      };
+
+      const purchaseInfo = await backendService.purchaseNFT(purchaseRequest);
+      
+      if ('Error' in purchaseInfo) {
+        throw new Error(purchaseInfo.Error);
+      }
+
+      // Get Plantify account and NFT price
+      const [plantifyAccount, nftPriceResult] = await Promise.all([
+        backendService.getPlantifyCanisterPrincipal(),
+        backendService.getNFTPrice(formData.selectedStartup)
+      ]);
+
+      if ('err' in nftPriceResult) {
+        throw new Error(nftPriceResult.err);
+      }
+
+      const nftPrice = nftPriceResult.ok;
+      const totalAmount = nftPrice * BigInt(quantity);
+
+      setPurchaseState({
+        step: 'transferring',
+        plantifyAccount,
+        nftPrice,
+      });
+
+      // Step 2: Transfer tokens using ICRC
+      const transferResult = await icrcService.transfer({
+        to: Principal.fromText(plantifyAccount),
+        amount: totalAmount,
+        memo: new TextEncoder().encode(`NFT Purchase: ${formData.selectedStartup}`),
+      });
+
+      if (transferResult.Err) {
+        throw new Error(`Transfer failed: ${transferResult.Err}`);
+      }
+
+      setPurchaseState({
+        step: 'completing',
+        plantifyAccount,
+        nftPrice,
+        transferResult: { blockIndex: transferResult.Ok!.blockIndex },
+      });
+
+      // Step 3: Complete NFT purchase
+      const completeResult = await backendService.completeNFTPurchase(
+        purchaseRequest,
+        Number(transferResult.Ok!.blockIndex)
+      );
+
+      if ('Error' in completeResult) {
+        throw new Error(completeResult.Error);
+      }
+
+      setPurchaseState({
+        step: 'success',
+        plantifyAccount,
+        nftPrice,
+        transferResult: { blockIndex: transferResult.Ok!.blockIndex },
+      });
+
+      // Call the original onPurchase to handle success
+      onPurchase();
+
+    } catch (error) {
+      console.error("Purchase failed:", error);
+      setPurchaseState({
+        step: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      });
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -181,6 +288,57 @@ export default function NFTPurchaseForm({
         </div>
       )}
 
+      {/* Purchase Status Display */}
+      {purchaseState.step !== 'idle' && (
+        <div className="mt-6 p-4 rounded-lg border">
+          {purchaseState.step === 'getting-info' && (
+            <div className="bg-blue-50 border-blue-200 text-blue-900">
+              <h3 className="font-medium">Getting Purchase Information</h3>
+              <p className="text-sm mt-1">Retrieving Plantify account and NFT price...</p>
+            </div>
+          )}
+          
+          {purchaseState.step === 'transferring' && (
+            <div className="bg-yellow-50 border-yellow-200 text-yellow-900">
+              <h3 className="font-medium">Transferring Tokens</h3>
+              <p className="text-sm mt-1">
+                Transferring {purchaseState.nftPrice ? (Number(purchaseState.nftPrice) * parseInt(formData.quantity)).toLocaleString() : '0'} ckUSDC to Plantify...
+              </p>
+              {purchaseState.plantifyAccount && (
+                <p className="text-xs mt-1 font-mono">Account: {purchaseState.plantifyAccount}</p>
+              )}
+            </div>
+          )}
+          
+          {purchaseState.step === 'completing' && (
+            <div className="bg-purple-50 border-purple-200 text-purple-900">
+              <h3 className="font-medium">Completing Purchase</h3>
+              <p className="text-sm mt-1">Verifying transfer and transferring NFTs...</p>
+              {purchaseState.transferResult && (
+                <p className="text-xs mt-1">Transaction ID: {purchaseState.transferResult.blockIndex.toString()}</p>
+              )}
+            </div>
+          )}
+          
+          {purchaseState.step === 'success' && (
+            <div className="bg-green-50 border-green-200 text-green-900">
+              <h3 className="font-medium">Purchase Successful!</h3>
+              <p className="text-sm mt-1">NFTs have been transferred to your account.</p>
+              {purchaseState.transferResult && (
+                <p className="text-xs mt-1">Transaction ID: {purchaseState.transferResult.blockIndex.toString()}</p>
+              )}
+            </div>
+          )}
+          
+          {purchaseState.step === 'error' && (
+            <div className="bg-red-50 border-red-200 text-red-900">
+              <h3 className="font-medium">Purchase Failed</h3>
+              <p className="text-sm mt-1">{purchaseState.error}</p>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex justify-between mt-6">
         <Button
           onClick={onBack}
@@ -190,18 +348,41 @@ export default function NFTPurchaseForm({
         </Button>
 
         <Button
-          onClick={onPurchase}
-          disabled={isPurchasing || !formData.selectedStartup || !formData.selectedInvestor || !formData.quantity}
+          onClick={handleNewPurchase}
+          disabled={purchaseState.step !== 'idle' && purchaseState.step !== 'error' || !formData.selectedStartup || !formData.selectedInvestor || !formData.quantity}
           className="flex items-center gap-2"
         >
-          {isPurchasing ? (
+          {purchaseState.step === 'getting-info' && (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Purchasing...
+              Getting purchase info...
             </>
-          ) : (
-            "Purchase NFT"
           )}
+          {purchaseState.step === 'transferring' && (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Transferring tokens...
+            </>
+          )}
+          {purchaseState.step === 'completing' && (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Completing purchase...
+            </>
+          )}
+          {purchaseState.step === 'success' && (
+            <>
+              <span>✅</span>
+              Purchase Complete!
+            </>
+          )}
+          {purchaseState.step === 'error' && (
+            <>
+              <span>❌</span>
+              Retry Purchase
+            </>
+          )}
+          {purchaseState.step === 'idle' && "Purchase NFT"}
         </Button>
       </div>
     </div>

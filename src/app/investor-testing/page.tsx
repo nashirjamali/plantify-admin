@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { backendService } from "../../lib/backend";
 import { AIService } from "../../lib/aiService";
+import { icrcService } from "../../lib/icrcService";
 import Layout from "../../components/Layout";
 import {
   ProgressSteps,
@@ -264,7 +265,6 @@ export default function InvestorTestingPage() {
             startups={startups}
             investors={investors}
             nfts={nfts}
-            isPurchasing={isPurchasing}
             onInputChange={handlePurchaseInputChange}
             onPurchase={purchaseNFT}
             onBack={() => setCurrentStep(1)}

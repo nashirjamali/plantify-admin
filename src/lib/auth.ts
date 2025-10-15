@@ -1,6 +1,7 @@
 import { AuthClient } from '@dfinity/auth-client';
 import { Principal } from '@dfinity/principal';
 import { backendService } from './backend';
+import { icrcService } from './icrcService';
 
 export interface AuthState {
   isAuthenticated: boolean;
@@ -22,6 +23,7 @@ export class AuthService {
     if (isAuthenticated) {
       this.principal = this.authClient.getIdentity().getPrincipal();
       await backendService.initialize(this.authClient.getIdentity());
+      await icrcService.initialize(this.authClient.getIdentity());
     }
     
     this.isInitialized = true;
@@ -41,6 +43,7 @@ export class AuthService {
           this.principal = this.authClient!.getIdentity().getPrincipal();
           try {
             await backendService.initialize(this.authClient!.getIdentity());
+            await icrcService.initialize(this.authClient!.getIdentity());
             resolve(this.principal);
           } catch (error) {
             console.error('Failed to initialize backend:', error);
