@@ -27,13 +27,24 @@ export class SupabaseService {
       }
       
       // Double-check: if this is already a URL, return it directly
-      if (base64Data.startsWith('http')) {
-        console.log('Base64 upload function received URL, returning directly:', base64Data);
+      const isUrl = base64Data.startsWith('http') || base64Data.startsWith('https');
+      if (isUrl) {
+        console.log('Base64 upload function received URL, returning directly:', {
+          url: base64Data,
+          length: base64Data.length,
+          firstChars: base64Data.substring(0, 50)
+        });
         return {
           url: base64Data,
           path: base64Data
         };
       }
+      
+      console.log('Base64 upload function processing base64 data:', {
+        length: base64Data.length,
+        startsWithData: base64Data.startsWith('data:image/'),
+        firstChars: base64Data.substring(0, 50)
+      });
       // Clean the base64 data more thoroughly
       let cleanBase64 = base64Data.trim();
       
@@ -134,8 +145,18 @@ export class SupabaseService {
     base64Data: string, 
     companyName: string
   ): Promise<ImageUploadResult> {
+    console.log('Company logo upload check:', {
+      companyName,
+      dataLength: base64Data.length,
+      startsWithHttp: base64Data.startsWith('http'),
+      startsWithData: base64Data.startsWith('data:image/'),
+      firstChars: base64Data.substring(0, 50),
+      lastChars: base64Data.substring(Math.max(0, base64Data.length - 50))
+    });
+    
     // Check if the data is already a URL (already uploaded)
-    if (base64Data.startsWith('http')) {
+    const isUrl = base64Data.startsWith('http') || base64Data.startsWith('https');
+    if (isUrl) {
       console.log('Logo is already a URL, returning existing URL');
       return {
         url: base64Data,
@@ -158,7 +179,8 @@ export class SupabaseService {
     startupId: string
   ): Promise<ImageUploadResult> {
     // Check if the data is already a URL (already uploaded)
-    if (base64Data.startsWith('http')) {
+    const isUrl = base64Data.startsWith('http') || base64Data.startsWith('https');
+    if (isUrl) {
       console.log('NFT image is already a URL, returning existing URL');
       return {
         url: base64Data,
@@ -182,7 +204,8 @@ export class SupabaseService {
     });
     
     // Check if the data is already a URL (already uploaded)
-    if (base64Data.startsWith('http')) {
+    const isUrl = base64Data.startsWith('http') || base64Data.startsWith('https');
+    if (isUrl) {
       console.log('Team member photo is already a URL, returning existing URL');
       return {
         url: base64Data,
@@ -205,7 +228,8 @@ export class SupabaseService {
     investorName: string
   ): Promise<ImageUploadResult> {
     // Check if the data is already a URL (already uploaded)
-    if (base64Data.startsWith('http')) {
+    const isUrl = base64Data.startsWith('http') || base64Data.startsWith('https');
+    if (isUrl) {
       console.log('Investor photo is already a URL, returning existing URL');
       return {
         url: base64Data,
@@ -246,7 +270,8 @@ export class SupabaseService {
       });
       
       // Check if the data is already a URL (already uploaded)
-      if (base64Data.startsWith('http')) {
+      const isUrl = base64Data.startsWith('http') || base64Data.startsWith('https');
+      if (isUrl) {
         console.log('Image is already a URL, returning existing URL');
         return {
           url: base64Data,
