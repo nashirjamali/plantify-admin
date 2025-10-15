@@ -55,7 +55,7 @@ export default function InvestorTestingPage() {
     if (isAuthenticated) {
       try {
         console.log("Loading data for investor testing...");
-        const startupsData = await backendService.getStartupsPaginated({ page: 1, limit: 100 });
+        const startupsData = await backendService.getStartupsPaginated({ page: 0, limit: 100 });
         const nftsData = await backendService.getAllNFTs();
         const investorsData = await backendService.getInvestors();
         console.log("Loaded startups:", startupsData.startups);
