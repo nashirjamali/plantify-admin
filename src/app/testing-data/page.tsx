@@ -192,7 +192,7 @@ export default function TestingDataPage() {
         monthlyRevenue: aiData.monthlyRevenue,
         operationalProcess: aiData.operationalProcess,
         advisors: aiData.advisors,
-        nftPrice: aiData.nftPrice,
+        nftPrice: "10",
         location: aiData.location,
         monthlyExpenses: aiData.monthlyExpenses,
         problemStatement: aiData.problemStatement,
