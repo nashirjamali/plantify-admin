@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { backendService } from "../../lib/backend";
 import { AIService, generateNFTImage as generateNFTImageNew } from "../../lib/aiService";
+import { SupabaseService } from "../../lib/supabase";
 import Layout from "../../components/Layout";
 import {
   ProgressSteps,
@@ -230,7 +231,14 @@ export default function TestingDataPage() {
       };
       
       const nftResult = await generateNFTImageNew(formData);
-      setAiGeneratedNFTImage(nftResult.imageUrl);
+      
+      // Upload NFT image to Supabase and get URL
+      const nftUploadResult = await SupabaseService.uploadNFTImage(
+        nftResult.imageUrl, 
+        `nft_${Date.now()}`
+      );
+      
+      setAiGeneratedNFTImage(nftUploadResult.url);
     } catch (error) {
       console.error("Failed to generate NFT image:", error);
       alert("Failed to generate NFT image. Please try again.");
@@ -268,10 +276,91 @@ export default function TestingDataPage() {
     setIsCreatingStartup(true);
     try {
       // Use AI generated logo if available, otherwise use empty array
-      const logoToUse = aiGeneratedLogo || "";
+      let logoToUse = aiGeneratedLogo || "";
+      
+      // If logo is base64, upload it to Supabase first
+      if (logoToUse && logoToUse.startsWith('data:image/')) {
+        try {
+          const logoUploadResult = await SupabaseService.uploadCompanyLogo(
+            logoToUse, 
+            startupFormData.startupName || `startup_${Date.now()}`
+          );
+          logoToUse = logoUploadResult.url;
+        } catch (error) {
+          console.error("Failed to upload logo to Supabase:", error);
+          // Continue with base64 if upload fails
+        }
+      }
       
       // Use AI generated NFT image if available, otherwise use logo as fallback
-      const nftImageToUse = aiGeneratedNFTImage || logoToUse;
+      let nftImageToUse = aiGeneratedNFTImage || logoToUse;
+      
+      // If NFT image is base64, upload it to Supabase first
+      if (nftImageToUse && nftImageToUse.startsWith('data:image/')) {
+        try {
+          const nftUploadResult = await SupabaseService.uploadNFTImage(
+            nftImageToUse, 
+            `startup_${Date.now()}`
+          );
+          nftImageToUse = nftUploadResult.url;
+        } catch (error) {
+          console.error("Failed to upload NFT image to Supabase:", error);
+          // Continue with base64 if upload fails
+        }
+      }
+      
+      // Handle company images - upload to Supabase if they are base64
+      const companyImagesToUse = aiGeneratedCompanyImages.length > 0 ? aiGeneratedCompanyImages : (startupFormData.companyImages || []);
+      const uploadedCompanyImages = [];
+      
+      for (let i = 0; i < companyImagesToUse.length; i++) {
+        const image = companyImagesToUse[i];
+        if (image && image.startsWith('data:image/')) {
+          try {
+            const imageUploadResult = await SupabaseService.uploadCompanyImage(
+              image, 
+              startupFormData.startupName || `startup_${Date.now()}`,
+              i
+            );
+            uploadedCompanyImages.push(imageUploadResult.url);
+          } catch (error) {
+            console.error("Failed to upload company image to Supabase:", error);
+            uploadedCompanyImages.push(image); // Use original if upload fails
+          }
+        } else {
+          uploadedCompanyImages.push(image); // Already a URL
+        }
+      }
+      
+      // Handle team member photos - upload to Supabase if they are base64
+      const processedTeamMembers = await Promise.all(
+        teamMembers.map(async (member, index) => {
+          let photoUrl = member.photo;
+          if (member.photo && member.photo.startsWith('data:image/')) {
+            try {
+              const photoUploadResult = await SupabaseService.uploadTeamMemberPhoto(
+                member.photo, 
+                member.name
+              );
+              photoUrl = photoUploadResult.url;
+            } catch (error) {
+              console.error("Failed to upload team member photo to Supabase:", error);
+              // Continue with base64 if upload fails
+            }
+          }
+          
+          return {
+            id: BigInt(index + 1),
+            name: member.name,
+            role: member.role,
+            background: member.background,
+            photo: photoUrl ? [photoUrl] as [] | [string] : [] as [] | [string],
+            linkedin: member.linkedin,
+            email: member.email,
+            isFounder: member.isFounder,
+          };
+        })
+      );
       
       const startupRequest = {
         status: startupFormData.status || "pending",
@@ -283,16 +372,7 @@ export default function TestingDataPage() {
         sector: startupFormData.sector,
         useOfFunds: startupFormData.useOfFunds || "Not specified",
         website: startupFormData.website,
-        teamMembers: teamMembers.map((member, index) => ({
-          id: BigInt(index + 1),
-          name: member.name,
-          role: member.role,
-          background: member.background,
-          photo: [] as [] | [string],
-          linkedin: member.linkedin,
-          email: member.email,
-          isFounder: member.isFounder,
-        })),
+        teamMembers: processedTeamMembers,
         targetMarket: startupFormData.targetMarket,
         revenueModel: startupFormData.revenueModel || "Not specified",
         solution: startupFormData.solution || startupFormData.description,
@@ -312,7 +392,7 @@ export default function TestingDataPage() {
         monthlyExpenses: startupFormData.monthlyExpenses || "0",
         problemStatement: startupFormData.problemStatement || startupFormData.description,
         founderBackground: startupFormData.founderBackground || "Not specified",
-        companyImages: aiGeneratedCompanyImages.length > 0 ? aiGeneratedCompanyImages : (startupFormData.companyImages || []),
+        companyImages: uploadedCompanyImages,
         builtByCaffeineAI: startupFormData.builtByCaffeineAI ? [startupFormData.builtByCaffeineAI] as [] | [boolean] : [] as [] | [boolean],
       };
 

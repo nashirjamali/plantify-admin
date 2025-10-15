@@ -792,7 +792,12 @@ Make the data realistic and diverse. Use different sectors like fintech, healtht
         startupData.startupName,
         startupData.sector
       );
-      startupData.companyLogo = companyLogo;
+      // Upload company logo to Supabase and get URL
+      const logoUploadResult = await SupabaseService.uploadCompanyLogo(
+        companyLogo, 
+        startupData.startupName
+      );
+      startupData.companyLogo = logoUploadResult.url;
 
       // Generate NFT image using the new function
       const formData: StartupFormData = {
@@ -839,7 +844,12 @@ Make the data realistic and diverse. Use different sectors like fintech, healtht
       };
 
       const nftResult = await generateNFTImage(formData);
-      startupData.nftImage = nftResult.imageUrl;
+      // Upload NFT image to Supabase and get URL
+      const nftUploadResult = await SupabaseService.uploadNFTImage(
+        nftResult.imageUrl, 
+        `temp_${Date.now()}`
+      );
+      startupData.nftImage = nftUploadResult.url;
 
       // Generate team member photos
       for (let i = 0; i < startupData.teamMembers.length; i++) {
@@ -849,7 +859,12 @@ Make the data realistic and diverse. Use different sectors like fintech, healtht
           member.role,
           member.background
         );
-        startupData.teamMembers[i].photo = photo;
+        // Upload team member photo to Supabase and get URL
+        const photoUploadResult = await SupabaseService.uploadTeamMemberPhoto(
+          photo, 
+          member.name
+        );
+        startupData.teamMembers[i].photo = photoUploadResult.url;
       }
 
       // Generate company images (2-4 images)
@@ -858,7 +873,18 @@ Make the data realistic and diverse. Use different sectors like fintech, healtht
         startupData.sector,
         3 // Generate 3 company images
       );
-      startupData.companyImages = companyImages;
+      
+      // Upload company images to Supabase and get URLs
+      const uploadedCompanyImages = [];
+      for (let i = 0; i < companyImages.length; i++) {
+        const imageUploadResult = await SupabaseService.uploadCompanyImage(
+          companyImages[i], 
+          startupData.startupName,
+          i
+        );
+        uploadedCompanyImages.push(imageUploadResult.url);
+      }
+      startupData.companyImages = uploadedCompanyImages;
 
       const requiredFields = [
         "startupName",
