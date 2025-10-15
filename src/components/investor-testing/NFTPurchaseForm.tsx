@@ -16,7 +16,6 @@ interface NFTPurchaseFormProps {
   investors: Investor[];
   nfts: NFTInfo[];
   onInputChange: (field: string, value: string) => void;
-  onPurchase: () => void;
   onBack: () => void;
   onRefresh?: () => void;
 }
@@ -35,7 +34,6 @@ export default function NFTPurchaseForm({
   investors,
   nfts,
   onInputChange,
-  onPurchase,
   onBack,
   onRefresh,
 }: NFTPurchaseFormProps) {
@@ -65,19 +63,6 @@ export default function NFTPurchaseForm({
       setPurchaseState({ step: 'getting-info' });
 
       // Step 1: Get purchase information
-      const purchaseRequest = {
-        startupId: formData.selectedStartup,
-        investorId: formData.selectedInvestor,
-        quantity: quantity,
-        memo: `NFT purchase for startup ${formData.selectedStartup} by investor ${formData.selectedInvestor}`,
-      };
-
-      const purchaseInfo = await backendService.purchaseNFT(purchaseRequest);
-      
-      if ('Error' in purchaseInfo) {
-        throw new Error(purchaseInfo.Error);
-      }
-
       // Get Plantify account and NFT price
       const [plantifyAccount, nftPriceResult] = await Promise.all([
         backendService.getPlantifyCanisterPrincipal(),
@@ -116,6 +101,13 @@ export default function NFTPurchaseForm({
       });
 
       // Step 3: Complete NFT purchase
+      const purchaseRequest = {
+        startupId: formData.selectedStartup,
+        investorId: formData.selectedInvestor,
+        quantity: quantity,
+        memo: `NFT purchase for startup ${formData.selectedStartup} by investor ${formData.selectedInvestor}`,
+      };
+      
       const completeResult = await backendService.completeNFTPurchase(
         purchaseRequest,
         Number(transferResult.Ok!.blockIndex)

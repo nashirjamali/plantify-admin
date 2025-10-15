@@ -91,7 +91,6 @@ export interface BackendActor {
   getStartupsPaginated: (params: { page: bigint; limit: bigint }) => Promise<PaginatedStartups>;
   getStartupDetails: (startupId: string) => Promise<Startup | null>;
   updateStartupStatus: (startupId: string, status: string) => Promise<boolean>;
-  purchaseNFT: (request: NFTPurchaseRequest) => Promise<NFTPurchaseResponse>;
   completeNFTPurchase: (request: NFTPurchaseRequest, blockIndex: bigint) => Promise<NFTPurchaseResponse>;
   getPlantifyCanisterPrincipal: () => Promise<string>;
   getNFTPrice: (startupId: string) => Promise<{ ok: bigint } | { err: string }>;
@@ -295,24 +294,6 @@ export class BackendService {
   async updateStartupStatus(startupId: string, status: string) {
     if (!this.actor) throw new Error("Backend not initialized");
     return await this.actor.updateStartupStatus(startupId, status);
-  }
-
-  async purchaseNFT(request: {
-    startupId: string;
-    investorId: string;
-    quantity: number;
-    memo?: string;
-  }) {
-    if (!this.actor) throw new Error("Backend not initialized");
-    
-    const purchaseRequest: NFTPurchaseRequest = {
-      startupId: request.startupId,
-      investorId: request.investorId,
-      quantity: BigInt(request.quantity),
-      memo: request.memo ? [request.memo] as [] | [string] : [] as [] | [string],
-    };
-    
-    return await this.actor.purchaseNFT(purchaseRequest);
   }
 
   async completeNFTPurchase(request: {

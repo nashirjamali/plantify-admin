@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { backendService } from "../../lib/backend";
 import { AIService } from "../../lib/aiService";
-import { icrcService } from "../../lib/icrcService";
 import Layout from "../../components/Layout";
 import {
   ProgressSteps,
@@ -24,7 +23,6 @@ export default function InvestorTestingPage() {
   const [nfts, setNfts] = useState<NFTInfo[]>([]);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [isPurchasing, setIsPurchasing] = useState(false);
   
   const [formData, setFormData] = useState({
     fullName: "",
@@ -147,55 +145,6 @@ export default function InvestorTestingPage() {
     }
   };
 
-  const purchaseNFT = async () => {
-    if (!purchaseFormData.selectedStartup || !purchaseFormData.selectedInvestor || !purchaseFormData.quantity) {
-      alert("Please select a startup, investor, and enter quantity");
-      return;
-    }
-    
-    if (!purchaseFormData.purchaseAmount || parseFloat(purchaseFormData.purchaseAmount) <= 0) {
-      alert("Please enter a valid purchase amount");
-      return;
-    }
-    
-    const quantity = parseInt(purchaseFormData.quantity);
-    if (quantity <= 0) {
-      alert("Please enter a valid quantity");
-      return;
-    }
-    
-    setIsPurchasing(true);
-    try {
-      // Use the real backend purchaseNFT function with selected investor
-      const result = await backendService.purchaseNFT({
-        startupId: purchaseFormData.selectedStartup,
-        investorId: purchaseFormData.selectedInvestor,
-        quantity: quantity,
-        memo: `NFT purchase for startup ${purchaseFormData.selectedStartup} by investor ${purchaseFormData.selectedInvestor}`,
-      });
-      
-      if ('Error' in result) {
-        throw new Error(result.Error);
-      }
-      
-      const success = result.Success;
-      setPurchaseFormData({
-        selectedStartup: "",
-        selectedInvestor: "",
-        quantity: "",
-        purchaseAmount: "",
-      });
-      await loadData();
-      setCurrentStep(1);
-      alert(`NFT purchased successfully! Transaction ID: ${success.transactionId}. Token IDs: ${success.tokenIds.join(', ')}`);
-    } catch (error) {
-      console.error("Failed to purchase NFT:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-      alert(`Failed to purchase NFT: ${errorMessage}`);
-    } finally {
-      setIsPurchasing(false);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -266,7 +215,6 @@ export default function InvestorTestingPage() {
             investors={investors}
             nfts={nfts}
             onInputChange={handlePurchaseInputChange}
-            onPurchase={purchaseNFT}
             onBack={() => setCurrentStep(1)}
             onRefresh={loadData}
           />
