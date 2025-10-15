@@ -25,6 +25,15 @@ export class SupabaseService {
       if (!supabaseUrl || !supabaseKey) {
         throw new Error('Supabase configuration missing: URL or API key not set');
       }
+      
+      // Double-check: if this is already a URL, return it directly
+      if (base64Data.startsWith('http')) {
+        console.log('Base64 upload function received URL, returning directly:', base64Data);
+        return {
+          url: base64Data,
+          path: base64Data
+        };
+      }
       // Clean the base64 data more thoroughly
       let cleanBase64 = base64Data.trim();
       
@@ -164,6 +173,14 @@ export class SupabaseService {
     base64Data: string, 
     memberName: string
   ): Promise<ImageUploadResult> {
+    console.log('Team member photo upload check:', {
+      memberName,
+      dataLength: base64Data.length,
+      startsWithHttp: base64Data.startsWith('http'),
+      startsWithData: base64Data.startsWith('data:image/'),
+      firstChars: base64Data.substring(0, 50)
+    });
+    
     // Check if the data is already a URL (already uploaded)
     if (base64Data.startsWith('http')) {
       console.log('Team member photo is already a URL, returning existing URL');
