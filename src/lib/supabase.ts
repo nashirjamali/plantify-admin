@@ -17,6 +17,14 @@ export class SupabaseService {
     folder: string = 'images'
   ): Promise<ImageUploadResult> {
     try {
+      // Check if Supabase is properly configured
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+      
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Supabase configuration missing: URL or API key not set');
+      }
       // Clean the base64 data
       let cleanBase64 = base64Data.trim();
       
@@ -28,16 +36,46 @@ export class SupabaseService {
         }
       }
 
+      // Validate base64 data
+      if (!cleanBase64 || cleanBase64.length === 0) {
+        throw new Error('Invalid base64 data: empty or null');
+      }
+      
+      // Check if base64 is valid
+      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+      if (!base64Regex.test(cleanBase64)) {
+        throw new Error('Invalid base64 data: contains invalid characters');
+      }
+      
       // Convert base64 to buffer
       const buffer = Buffer.from(cleanBase64, 'base64');
       
-      // Generate unique filename
+      // Check if buffer is valid
+      if (buffer.length === 0) {
+        throw new Error('Invalid base64 data: results in empty buffer');
+      }
+      
+      // Generate unique filename with better sanitization
       const timestamp = Date.now();
       const fileExtension = 'png'; // Assuming PNG for now
-      const uniqueFileName = `${fileName}_${timestamp}.${fileExtension}`;
+      
+      // Sanitize fileName to avoid path issues
+      const sanitizedFileName = fileName
+        .replace(/[^a-zA-Z0-9_-]/g, '_')
+        .substring(0, 100); // Limit length
+      
+      const uniqueFileName = `${sanitizedFileName}_${timestamp}.${fileExtension}`;
       const filePath = `${folder}/${uniqueFileName}`;
+      
+      console.log('Generated file path:', filePath);
 
       // Upload to Supabase Storage
+      console.log('Uploading to Supabase:', {
+        filePath,
+        bufferSize: buffer.length,
+        contentType: 'image/png'
+      });
+      
       const { error } = await supabase.storage
         .from('plantify-uploads')
         .upload(filePath, buffer, {
@@ -46,6 +84,12 @@ export class SupabaseService {
         });
 
       if (error) {
+        console.error('Supabase upload error details:', {
+          error,
+          filePath,
+          bufferSize: buffer.length,
+          base64Length: base64Data.length
+        });
         throw new Error(`Supabase upload error: ${error.message}`);
       }
 
@@ -122,14 +166,27 @@ export class SupabaseService {
     companyName: string,
     imageIndex: number
   ): Promise<ImageUploadResult> {
-    // Handle undefined or null company name
-    const safeCompanyName = companyName || 'unknown_company';
-    const sanitizedName = safeCompanyName
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '_')
-      .substring(0, 50);
-    
-    return this.uploadBase64Image(base64Data, `company_${sanitizedName}_${imageIndex}`, 'company-images');
+    try {
+      // Handle undefined or null company name
+      const safeCompanyName = companyName || 'unknown_company';
+      const sanitizedName = safeCompanyName
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '_')
+        .substring(0, 50);
+      
+      console.log('Uploading company image:', {
+        companyName: safeCompanyName,
+        sanitizedName,
+        imageIndex,
+        base64Length: base64Data.length,
+        startsWithData: base64Data.startsWith('data:image/')
+      });
+      
+      return await this.uploadBase64Image(base64Data, `company_${sanitizedName}_${imageIndex}`, 'company-images');
+    } catch (error) {
+      console.error('Company image upload error:', error);
+      throw error;
+    }
   }
 
   static async deleteImage(filePath: string): Promise<boolean> {

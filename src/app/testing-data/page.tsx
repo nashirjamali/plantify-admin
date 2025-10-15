@@ -317,15 +317,28 @@ export default function TestingDataPage() {
         const image = companyImagesToUse[i];
         if (image && image.startsWith('data:image/')) {
           try {
+            console.log(`Uploading company image ${i + 1}/${companyImagesToUse.length}:`, {
+              imageLength: image.length,
+              startupName: startupFormData.startupName,
+              imageIndex: i
+            });
+            
             const imageUploadResult = await SupabaseService.uploadCompanyImage(
               image, 
               startupFormData.startupName || `startup_${Date.now()}`,
               i
             );
+            console.log(`Successfully uploaded company image ${i + 1}:`, imageUploadResult.url);
             uploadedCompanyImages.push(imageUploadResult.url);
           } catch (error) {
-            console.error("Failed to upload company image to Supabase:", error);
-            uploadedCompanyImages.push(image); // Use original if upload fails
+            console.error(`Failed to upload company image ${i + 1} to Supabase:`, {
+              error: error instanceof Error ? error.message : error,
+              imageLength: image.length,
+              startupName: startupFormData.startupName,
+              imageIndex: i
+            });
+            // Skip this image if upload fails rather than using base64
+            console.log(`Skipping company image ${i + 1} due to upload failure`);
           }
         } else {
           uploadedCompanyImages.push(image); // Already a URL
