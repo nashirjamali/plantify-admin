@@ -125,6 +125,15 @@ export class SupabaseService {
     base64Data: string, 
     companyName: string
   ): Promise<ImageUploadResult> {
+    // Check if the data is already a URL (already uploaded)
+    if (base64Data.startsWith('http')) {
+      console.log('Logo is already a URL, returning existing URL');
+      return {
+        url: base64Data,
+        path: base64Data
+      };
+    }
+    
     // Handle undefined or null company name
     const safeCompanyName = companyName || 'unknown_company';
     const sanitizedName = safeCompanyName
@@ -139,6 +148,15 @@ export class SupabaseService {
     base64Data: string, 
     startupId: string
   ): Promise<ImageUploadResult> {
+    // Check if the data is already a URL (already uploaded)
+    if (base64Data.startsWith('http')) {
+      console.log('NFT image is already a URL, returning existing URL');
+      return {
+        url: base64Data,
+        path: base64Data
+      };
+    }
+    
     return this.uploadBase64Image(base64Data, `nft_${startupId}`, 'nfts');
   }
 
@@ -146,6 +164,15 @@ export class SupabaseService {
     base64Data: string, 
     memberName: string
   ): Promise<ImageUploadResult> {
+    // Check if the data is already a URL (already uploaded)
+    if (base64Data.startsWith('http')) {
+      console.log('Team member photo is already a URL, returning existing URL');
+      return {
+        url: base64Data,
+        path: base64Data
+      };
+    }
+    
     // Handle undefined or null member name
     const safeMemberName = memberName || 'unknown_member';
     const sanitizedName = safeMemberName
@@ -160,6 +187,15 @@ export class SupabaseService {
     base64Data: string, 
     investorName: string
   ): Promise<ImageUploadResult> {
+    // Check if the data is already a URL (already uploaded)
+    if (base64Data.startsWith('http')) {
+      console.log('Investor photo is already a URL, returning existing URL');
+      return {
+        url: base64Data,
+        path: base64Data
+      };
+    }
+    
     // Handle undefined or null investor name
     const safeInvestorName = investorName || 'unknown_investor';
     const sanitizedName = safeInvestorName
@@ -188,8 +224,18 @@ export class SupabaseService {
         sanitizedName,
         imageIndex,
         base64Length: base64Data.length,
-        startsWithData: base64Data.startsWith('data:image/')
+        startsWithData: base64Data.startsWith('data:image/'),
+        isUrl: base64Data.startsWith('http')
       });
+      
+      // Check if the data is already a URL (already uploaded)
+      if (base64Data.startsWith('http')) {
+        console.log('Image is already a URL, returning existing URL');
+        return {
+          url: base64Data,
+          path: base64Data // Use URL as path for already uploaded images
+        };
+      }
       
       return await this.uploadBase64Image(base64Data, `company_${sanitizedName}_${imageIndex}`, 'company-images');
     } catch (error) {
