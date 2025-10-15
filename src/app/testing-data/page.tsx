@@ -14,14 +14,14 @@ import {
   StatusUpdateForm,
   DataOverview
 } from "../../components/testing-data";
-import type { Founder, Startup } from "../../declarations/plantify_backend/plantify_backend.did";
+import type { Founder, StartupSummary } from "../../declarations/plantify_backend/plantify_backend.did";
 
 export default function TestingDataPage() {
   const { isAuthenticated, isLoading, principal } = useAuth();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [founders, setFounders] = useState<Founder[]>([]);
-  const [startups, setStartups] = useState<Startup[]>([]);
+  const [startups, setStartups] = useState<StartupSummary[]>([]);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isGeneratingStartupAI, setIsGeneratingStartupAI] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -100,9 +100,9 @@ export default function TestingDataPage() {
     if (isAuthenticated) {
       try {
         const foundersData = await backendService.getFounders();
-        const startupsData = await backendService.getAllStartups();
+        const startupsData = await backendService.getStartupsPaginated({ page: 0, limit: 100 });
         setFounders(foundersData);
-        setStartups(startupsData);
+        setStartups(startupsData.startups);
       } catch (error) {
         console.error("Failed to load data:", error);
       }
@@ -433,10 +433,15 @@ export default function TestingDataPage() {
         let successMessage = `Startup "${startupName}" status updated to "${newStatus}" successfully!`;
         
         // If status is active, mint an NFT
-        if (newStatus === 'Active' && startup && principal) {
+        if (newStatus === 'Active' && principal) {
           try {
             console.log('Minting NFT for active startup:', startupName);
-            const nftResult = await backendService.mintNFTForStartup(selectedStartup, startup, principal);
+            // Get full startup details for NFT minting
+            const fullStartup = await backendService.getStartupDetails(selectedStartup);
+            if (!fullStartup) {
+              throw new Error('Startup not found');
+            }
+            const nftResult = await backendService.mintNFTForStartup(selectedStartup, fullStartup, principal);
             
             if ('ok' in nftResult) {
               const nftResponse = nftResult.ok;

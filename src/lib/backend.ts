@@ -89,6 +89,7 @@ export interface BackendActor {
   getInvestors: () => Promise<Investor[]>;
   getAllStartups: () => Promise<Startup[]>;
   getStartupsPaginated: (params: { page: bigint; limit: bigint }) => Promise<PaginatedStartups>;
+  getStartupDetails: (startupId: string) => Promise<Startup | null>;
   updateStartupStatus: (startupId: string, status: string) => Promise<boolean>;
   purchaseNFT: (request: NFTPurchaseRequest) => Promise<NFTPurchaseResponse>;
   completeNFTPurchase: (request: NFTPurchaseRequest, blockIndex: bigint) => Promise<NFTPurchaseResponse>;
@@ -283,6 +284,12 @@ export class BackendService {
       page: BigInt(params.page),
       limit: BigInt(params.limit)
     });
+  }
+
+  async getStartupDetails(startupId: string) {
+    if (!this.actor) throw new Error("Backend not initialized");
+    const result = await this.actor.getStartupDetails(startupId);
+    return result;
   }
 
   async updateStartupStatus(startupId: string, status: string) {

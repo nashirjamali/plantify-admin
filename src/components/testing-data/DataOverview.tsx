@@ -3,28 +3,12 @@ interface Founder {
   email?: string;
 }
 
-interface TeamMember {
-  name: string;
-  role: string;
-  email: string;
-  isFounder: boolean;
-}
 
-interface Startup {
-  id: string;
-  startupName?: string;
-  description?: string;
-  status?: string;
-  sector?: string;
-  foundedYear?: string;
-  teamMembers?: TeamMember[];
-  fundingGoal?: string;
-  website?: string;
-}
+import type { StartupSummary } from "../../declarations/plantify_backend/plantify_backend.did";
 
 interface DataOverviewProps {
   founders: Founder[];
-  startups: Startup[];
+  startups: StartupSummary[];
 }
 
 export default function DataOverview({ founders, startups }: DataOverviewProps) {
@@ -56,44 +40,25 @@ export default function DataOverview({ founders, startups }: DataOverviewProps) 
               <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-medium text-black">{startup.startupName || "Unknown Startup"}</h4>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    startup.status === 'Approved' ? 'bg-black text-white' :
-                    startup.status === 'Rejected' ? 'bg-gray-100 text-black' :
-                    startup.status === 'Active' ? 'bg-gray-100 text-black' :
-                    'bg-gray-200 text-black'
-                  }`}>
-                    {startup.status || 'pending'}
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-black">
+                    {startup.companyType || 'Startup'}
                   </span>
                 </div>
                 <p className="text-sm text-black mb-2">{startup.description || "No description"}</p>
                 <div className="flex flex-wrap gap-2 text-xs text-black">
                   <span className="bg-gray-100 px-2 py-1 rounded">
-                    {startup.sector || "No sector"}
+                    {startup.companyType || "No type"}
                   </span>
                   <span className="bg-gray-100 px-2 py-1 rounded">
-                    Founded: {startup.foundedYear || "N/A"}
+                    Available NFTs: {startup.availableNFTs.toString()}
                   </span>
                   <span className="bg-gray-100 px-2 py-1 rounded">
-                    Team: {startup.teamMembers?.length || 0} members
+                    Total Funding: {startup.totalFunding}
                   </span>
-                  {startup.fundingGoal && (
-                    <span className="bg-gray-100 px-2 py-1 rounded">
-                      Goal: ${startup.fundingGoal}
-                    </span>
-                  )}
+                  <span className="bg-gray-100 px-2 py-1 rounded">
+                    NFT Price: {startup.nftPrice}
+                  </span>
                 </div>
-                {startup.website && (
-                  <div className="mt-2">
-                    <a 
-                      href={startup.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-black hover:text-gray-700 text-xs"
-                    >
-                      {startup.website}
-                    </a>
-                  </div>
-                )}
               </div>
             ))
           )}

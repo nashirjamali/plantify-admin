@@ -1,13 +1,7 @@
-interface Startup {
-  id: string;
-  startupName?: string;
-  status?: string;
-  description?: string;
-  sector?: string;
-}
+import type { StartupSummary } from "../../declarations/plantify_backend/plantify_backend.did";
 
 interface StatusUpdateFormProps {
-  startups: Startup[];
+  startups: StartupSummary[];
   selectedStartup: string;
   newStatus: string;
   isUpdatingStatus: boolean;
@@ -80,22 +74,19 @@ export default function StatusUpdateForm({
                 <span className="font-medium">{selectedStartupData.startupName || "N/A"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Current Status:</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  selectedStartupData.status === 'Approved' ? 'bg-black text-white' :
-                  selectedStartupData.status === 'Rejected' ? 'bg-gray-200 text-black' :
-                  selectedStartupData.status === 'Active' ? 'bg-gray-100 text-black' :
-                  'bg-gray-100 text-black'
-                }`}>
-                  {selectedStartupData.status || 'pending'}
+                <span className="text-gray-600">Company Type:</span>
+                <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-black">
+                  {selectedStartupData.companyType || 'Startup'}
                 </span>
               </div>
-              {selectedStartupData.sector && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Sector:</span>
-                  <span className="font-medium">{selectedStartupData.sector}</span>
-                </div>
-              )}
+              <div className="flex justify-between">
+                <span className="text-gray-600">Available NFTs:</span>
+                <span className="font-medium">{selectedStartupData.availableNFTs.toString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total Funding:</span>
+                <span className="font-medium">{selectedStartupData.totalFunding}</span>
+              </div>
               {selectedStartupData.description && (
                 <div>
                   <span className="text-gray-600">Description:</span>
@@ -115,18 +106,10 @@ export default function StatusUpdateForm({
             disabled={!selectedStartup}
           >
             <option value="">Select new status</option>
-            {selectedStartupData && selectedStartupData.status !== 'Pending' && (
-              <option value="Pending">Pending</option>
-            )}
-            {selectedStartupData && selectedStartupData.status !== 'Approved' && (
-              <option value="Approved">Approved</option>
-            )}
-            {selectedStartupData && selectedStartupData.status !== 'Rejected' && (
-              <option value="Rejected">Rejected</option>
-            )}
-            {selectedStartupData && selectedStartupData.status !== 'Active' && (
-              <option value="Active">Active</option>
-            )}
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+            <option value="Active">Active</option>
           </select>
           <p className="mt-1 text-xs text-gray-500">
             {selectedStartup ? 
@@ -149,11 +132,6 @@ export default function StatusUpdateForm({
               </div>
             </div>
           )}
-          {selectedStartupData && selectedStartupData.status === newStatus && (
-            <p className="mt-1 text-xs text-amber-600">
-              ⚠️ Selected status is the same as current status
-            </p>
-          )}
         </div>
       </div>
 
@@ -169,7 +147,7 @@ export default function StatusUpdateForm({
         </button>
         <button
           onClick={onUpdate}
-          disabled={isUpdatingStatus || !selectedStartup || !newStatus || (selectedStartupData && selectedStartupData.status === newStatus)}
+          disabled={isUpdatingStatus || !selectedStartup || !newStatus}
           className="bg-black hover:bg-gray-800 disabled:bg-gray-400 text-black px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-2"
         >
           {isUpdatingStatus ? (

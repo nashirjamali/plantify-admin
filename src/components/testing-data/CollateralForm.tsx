@@ -1,10 +1,7 @@
-interface Startup {
-  id: string;
-  startupName?: string;
-}
+import type { StartupSummary } from "../../declarations/plantify_backend/plantify_backend.did";
 
 interface CollateralFormProps {
-  startups: Startup[];
+  startups: StartupSummary[];
   selectedStartup: string;
   collateralAmount: string;
   isToppingUp: boolean;
