@@ -25,7 +25,7 @@ export class SupabaseService {
       if (!supabaseUrl || !supabaseKey) {
         throw new Error('Supabase configuration missing: URL or API key not set');
       }
-      // Clean the base64 data
+      // Clean the base64 data more thoroughly
       let cleanBase64 = base64Data.trim();
       
       // Remove data URL prefix if present
@@ -36,14 +36,23 @@ export class SupabaseService {
         }
       }
 
+      // Remove any whitespace, newlines, or other formatting characters
+      cleanBase64 = cleanBase64.replace(/\s/g, '');
+
       // Validate base64 data
       if (!cleanBase64 || cleanBase64.length === 0) {
         throw new Error('Invalid base64 data: empty or null');
       }
       
-      // Check if base64 is valid
+      // More lenient base64 validation - allow padding variations
       const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
       if (!base64Regex.test(cleanBase64)) {
+        console.error('Invalid base64 data detected:', {
+          originalLength: base64Data.length,
+          cleanedLength: cleanBase64.length,
+          firstChars: cleanBase64.substring(0, 50),
+          lastChars: cleanBase64.substring(Math.max(0, cleanBase64.length - 50))
+        });
         throw new Error('Invalid base64 data: contains invalid characters');
       }
       

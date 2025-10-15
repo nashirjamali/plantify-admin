@@ -422,19 +422,27 @@ export class AIService {
       }
     }
 
-    // Look for the base64 pattern
+    // Look for the base64 pattern with more flexible matching
     const base64Match = cleaned.match(
-      /data:image\/png;base64,([A-Za-z0-9+/=]+)/i
+      /data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/i
     );
     if (base64Match) {
-      cleaned = `data:image/png;base64,${base64Match[1]}`;
-    } else if (cleaned.startsWith("data:image/png;base64,")) {
-      // Already in correct format
+      // Clean the base64 part by removing any whitespace or invalid characters
+      const base64Part = base64Match[1].replace(/\s/g, '').replace(/[^A-Za-z0-9+/=]/g, '');
+      cleaned = `data:image/png;base64,${base64Part}`;
+    } else if (cleaned.startsWith("data:image/")) {
+      // Already in correct format, but clean the base64 part
+      const base64Part = cleaned.split(',')[1];
+      if (base64Part) {
+        const cleanBase64Part = base64Part.replace(/\s/g, '').replace(/[^A-Za-z0-9+/=]/g, '');
+        cleaned = `data:image/png;base64,${cleanBase64Part}`;
+      }
     } else {
       // If no proper format found, try to extract just the base64 part
       const justBase64 = cleaned.match(/([A-Za-z0-9+/=]+)/);
       if (justBase64) {
-        cleaned = `data:image/png;base64,${justBase64[1]}`;
+        const cleanBase64Part = justBase64[1].replace(/\s/g, '').replace(/[^A-Za-z0-9+/=]/g, '');
+        cleaned = `data:image/png;base64,${cleanBase64Part}`;
       } else {
         // Fallback to default 1x1 pixel PNG
         cleaned =
@@ -793,11 +801,17 @@ Make the data realistic and diverse. Use different sectors like fintech, healtht
         startupData.sector
       );
       // Upload company logo to Supabase and get URL
-      const logoUploadResult = await SupabaseService.uploadCompanyLogo(
-        companyLogo, 
-        startupData.startupName
-      );
-      startupData.companyLogo = logoUploadResult.url;
+      try {
+        const logoUploadResult = await SupabaseService.uploadCompanyLogo(
+          companyLogo, 
+          startupData.startupName
+        );
+        startupData.companyLogo = logoUploadResult.url;
+      } catch (error) {
+        console.error('Failed to upload company logo to Supabase:', error);
+        // Use a fallback logo URL or skip if upload fails
+        startupData.companyLogo = "";
+      }
 
       // Generate NFT image using the new function
       const formData: StartupFormData = {
@@ -845,11 +859,17 @@ Make the data realistic and diverse. Use different sectors like fintech, healtht
 
       const nftResult = await generateNFTImage(formData);
       // Upload NFT image to Supabase and get URL
-      const nftUploadResult = await SupabaseService.uploadNFTImage(
-        nftResult.imageUrl, 
-        `temp_${Date.now()}`
-      );
-      startupData.nftImage = nftUploadResult.url;
+      try {
+        const nftUploadResult = await SupabaseService.uploadNFTImage(
+          nftResult.imageUrl, 
+          `temp_${Date.now()}`
+        );
+        startupData.nftImage = nftUploadResult.url;
+      } catch (error) {
+        console.error('Failed to upload NFT image to Supabase:', error);
+        // Use a fallback NFT image URL or skip if upload fails
+        startupData.nftImage = "";
+      }
 
       // Generate team member photos
       for (let i = 0; i < startupData.teamMembers.length; i++) {
@@ -860,11 +880,17 @@ Make the data realistic and diverse. Use different sectors like fintech, healtht
           member.background
         );
         // Upload team member photo to Supabase and get URL
-        const photoUploadResult = await SupabaseService.uploadTeamMemberPhoto(
-          photo, 
-          member.name
-        );
-        startupData.teamMembers[i].photo = photoUploadResult.url;
+        try {
+          const photoUploadResult = await SupabaseService.uploadTeamMemberPhoto(
+            photo, 
+            member.name
+          );
+          startupData.teamMembers[i].photo = photoUploadResult.url;
+        } catch (error) {
+          console.error('Failed to upload team member photo to Supabase:', error);
+          // Use a fallback photo URL or skip if upload fails
+          startupData.teamMembers[i].photo = "";
+        }
       }
 
       // Generate company images (2-4 images)
@@ -877,12 +903,17 @@ Make the data realistic and diverse. Use different sectors like fintech, healtht
       // Upload company images to Supabase and get URLs
       const uploadedCompanyImages = [];
       for (let i = 0; i < companyImages.length; i++) {
-        const imageUploadResult = await SupabaseService.uploadCompanyImage(
-          companyImages[i], 
-          startupData.startupName,
-          i
-        );
-        uploadedCompanyImages.push(imageUploadResult.url);
+        try {
+          const imageUploadResult = await SupabaseService.uploadCompanyImage(
+            companyImages[i], 
+            startupData.startupName,
+            i
+          );
+          uploadedCompanyImages.push(imageUploadResult.url);
+        } catch (error) {
+          console.error(`Failed to upload company image ${i + 1} to Supabase:`, error);
+          // Skip this image if upload fails
+        }
       }
       startupData.companyImages = uploadedCompanyImages;
 
