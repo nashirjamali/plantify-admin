@@ -179,7 +179,7 @@ export default function TestingDataPage() {
         companyType: aiData.companyType,
         status: aiData.status,
         targetMarket: aiData.targetMarket,
-        fundingGoal: aiData.fundingGoal,
+        fundingGoal: "1000",
         periodicProfitSharing: aiData.periodicProfitSharing,
         website: aiData.website,
         // Additional backend fields
